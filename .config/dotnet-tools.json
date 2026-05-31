@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-ef": {
+      "version": "9.0.4",
+      "commands": [
+        "dotnet-ef"
+      ]
+    },
+    "dotnet-outdated-tool": {
+      "version": "4.7.1",
+      "commands": [
+        "dotnet-outdated"
+      ]
+    }
+  }
+}

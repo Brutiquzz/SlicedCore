@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520" width="520" height="520" font-family="Segoe UI, Arial, sans-serif">
+
+  <!-- Outer ring segments: Features -->
+  <!-- Full circle background for outer ring -->
+  <circle cx="260" cy="260" r="240" fill="#e8e8e8" />
+
+  <!-- Feature segment dividers (4 features, 90° each) -->
+  <!-- Top-right: CreateOrder -->
+  <path d="M260,260 L260,20 A240,240 0 0,1 500,260 Z" fill="#d0e8f5" />
+  <!-- Bottom-right: CancelOrder -->
+  <path d="M260,260 L500,260 A240,240 0 0,1 260,500 Z" fill="#d0e8f5" />
+  <!-- Bottom-left: GetOrder -->
+  <path d="M260,260 L260,500 A240,240 0 0,1 20,260 Z" fill="#d0e8f5" />
+  <!-- Top-left: ShipOrder -->
+  <path d="M260,260 L20,260 A240,240 0 0,1 260,20 Z" fill="#d0e8f5" />
+
+  <!-- Dividing lines between features -->
+  <line x1="260" y1="260" x2="260" y2="20"   stroke="#fff" stroke-width="3"/>
+  <line x1="260" y1="260" x2="500" y2="260"  stroke="#fff" stroke-width="3"/>
+  <line x1="260" y1="260" x2="260" y2="500"  stroke="#fff" stroke-width="3"/>
+  <line x1="260" y1="260" x2="20"  y2="260"  stroke="#fff" stroke-width="3"/>
+
+  <!-- Middle ring: Private Contracts -->
+  <circle cx="260" cy="260" r="160" fill="#90be6d" />
+
+  <!-- Middle ring segment dividers -->
+  <line x1="260" y1="260" x2="260" y2="100"  stroke="#fff" stroke-width="3"/>
+  <line x1="260" y1="260" x2="420" y2="260"  stroke="#fff" stroke-width="3"/>
+  <line x1="260" y1="260" x2="260" y2="420"  stroke="#fff" stroke-width="3"/>
+  <line x1="260" y1="260" x2="100" y2="260"  stroke="#fff" stroke-width="3"/>
+
+  <!-- Inner circle: Domain Models -->
+  <circle cx="260" cy="260" r="80" fill="#4a90d9" />
+
+  <!-- Centre label -->
+  <text x="260" y="252" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Domain</text>
+  <text x="260" y="270" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Models</text>
+  <text x="260" y="287" text-anchor="middle" fill="#fff" font-size="10">(shared)</text>
+
+  <!-- Middle ring labels: Private Contracts per quadrant -->
+  <text x="330" y="195" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold" transform="rotate(0,330,195)">Private</text>
+  <text x="330" y="208" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Contracts</text>
+
+  <text x="330" y="322" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Private</text>
+  <text x="330" y="335" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Contracts</text>
+
+  <text x="190" y="322" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Private</text>
+  <text x="190" y="335" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Contracts</text>
+
+  <text x="190" y="195" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Private</text>
+  <text x="190" y="208" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Contracts</text>
+
+  <!-- Outer ring labels: Feature names -->
+  <text x="390" y="152" text-anchor="middle" fill="#2c5f7a" font-size="13" font-weight="bold">CreateOrder</text>
+  <text x="390" y="375" text-anchor="middle" fill="#2c5f7a" font-size="13" font-weight="bold">CancelOrder</text>
+  <text x="130" y="375" text-anchor="middle" fill="#2c5f7a" font-size="13" font-weight="bold">GetOrder</text>
+  <text x="130" y="152" text-anchor="middle" fill="#2c5f7a" font-size="13" font-weight="bold">ShipOrder</text>
+
+  <!-- Legend -->
+  <rect x="30" y="460" width="14" height="14" fill="#4a90d9" rx="2"/>
+  <text x="50" y="472" fill="#444" font-size="12">Domain Models — shared within the domain</text>
+
+  <rect x="30" y="480" width="14" height="14" fill="#90be6d" rx="2"/>
+  <text x="50" y="492" fill="#444" font-size="12">Private Contracts — scoped to the feature</text>
+
+  <rect x="30" y="500" width="14" height="14" fill="#d0e8f5" rx="2"/>
+  <text x="50" y="512" fill="#444" font-size="12">Feature — the outermost isolation boundary</text>
+
+</svg>

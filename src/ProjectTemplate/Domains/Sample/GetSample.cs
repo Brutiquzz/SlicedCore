@@ -1,0 +1,87 @@
+using ProjectTemplate.Data;
+using ProjectTemplate.Dependencies.Attributes;
+
+namespace ProjectTemplate.Domains.Sample;
+
+[Feature(FeatureType.Query)]
+public partial class GetSample
+{
+    partial class PresentationLayer
+    {
+        private async Task<Result<IGetSampleResponse>> PresentationLogic(IGetSampleRequest request, CancellationToken cancellationToken)
+        {
+            // Implement any further Presentation Code for the GetSampleFeature here...
+            // Use GetRequiredService or GetService to access accessible dependencies from this layer
+            // ...
+            
+            var appDTOResponse = await ForwardToApplicationLayer(request.Adapt<Core.IApplicationRequestDTO>(), cancellationToken);
+            
+            if (appDTOResponse.IsError())
+            {
+                LogError(appDTOResponse.Errors);
+                return Result.Error(new ErrorList(appDTOResponse.Errors));
+            }
+
+            return Result.Success((IGetSampleResponse)appDTOResponse.Value.Adapt<GetSampleResponse>());
+        }
+
+        public sealed class GetSampleRequestValidator : AbstractValidator<IGetSampleRequest>
+        {
+            public GetSampleRequestValidator()
+            {
+                RuleFor(x => x.Id)
+                    .GreaterThan(0).WithMessage("Id must be a positive integer");
+            }
+        }
+    }
+
+    partial class ApplicationLayer
+    {
+        private async Task<Result<Core.IApplicationResponseDTO>> ApplicationLogic(Sample sample, CancellationToken cancellationToken)
+        {
+            // Implement any further Application Code for the GetSampleFeature here...
+            // Use GetRequiredService or GetService to access accessible dependencies from this layer
+            // ...
+            var persistenceDTOResponse = await ForwardToInfrastructureLayer(sample.Adapt<Core.IPersistenceRequestDTO>(), cancellationToken);
+            
+            if (persistenceDTOResponse.IsError())
+            {
+                LogError(string.Join(", ", persistenceDTOResponse.Errors));
+                return Result.Error(new ErrorList(persistenceDTOResponse.Errors));
+            }
+
+            if (persistenceDTOResponse.Value is null)
+                return Result.NotFound();
+
+            return Result.Success((Core.IApplicationResponseDTO)persistenceDTOResponse.Value.Adapt<ApplicationResponseDTO>());
+        }
+
+        private sealed class SampleBusinessValidator : AbstractValidator<Sample>
+        {
+            public SampleBusinessValidator()
+            {
+                RuleFor(x => x.Id).GreaterThan(0);
+            }
+        }
+    }
+
+    partial class InfrastructureLayer
+    {
+        private async Task<Result<Core.IPersistenceResponseDTO>> InfrastructureLogic(SampleEntity entity, CancellationToken cancellationToken)
+        {
+            // Implement any further Infrastructure Code for the GetSampleFeature here
+            // Use GetRequiredService or GetService to access accessible dependencies from this layer
+            // ...
+
+            var dbContext = GetRequiredDbContext<AppDbContext>();
+
+            var found = await dbContext.Set<SampleEntity>()
+                .FindAsync(new object[] { entity.Id }, cancellationToken);
+
+            if (found is null)
+                return Result.NotFound();
+
+            return Result.Success((Core.IPersistenceResponseDTO)found.Adapt<PersistenceResponseDTO>());
+        }
+    }
+}

@@ -1,0 +1,10 @@
+global using Cortex.Mediator;
+global using Cortex.Mediator.Commands;
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.AspNetCore.Routing;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using ProjectTemplate.Dependencies.Attributes;
+global using ProjectTemplate.Dependencies.Extensions;

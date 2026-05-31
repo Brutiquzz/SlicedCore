@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Brutiquzz",
+  "classifications": [ "Feature", "Template" ],
+  "identity": "Brutiquzz.Templates.Feature",
+  "name": "Feature Template",
+  "shortName": "feature",
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "sourceName": "CreateSample",
+  "preferNameDirectory": false,
+  "symbols": {
+    "projectName": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "ProjectTemplate",
+      "replaces": "ProjectTemplate",
+      "description": "The root namespace / project name of the target solution"
+    },
+    "domainName": {
+      "type": "generated",
+      "generator": "regex",
+      "datatype": "string",
+      "parameters": {
+        "source": "name",
+        "steps": [
+          {
+            "regex": "^(?:Create|Get|Update|Delete|List)(.+)$",
+            "replacement": "$1"
+          }
+        ]
+      },
+      "replaces": "Sample",
+      "description": "Domain name derived from feature name by stripping the 'Create' prefix"
+    },
+    "featureType": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "command",
+      "description": "Whether this feature is a command (write, POST) or a query (read-only, GET).",
+      "choices": [
+        {
+          "choice": "command",
+          "description": "A state-changing feature. Generates a POST endpoint, write infrastructure (Add + SaveChangesAsync), and command-style Result.Created responses."
+        },
+        {
+          "choice": "query",
+          "description": "A read-only feature. Generates a GET endpoint, read infrastructure (FirstOrDefaultAsync), and Result.Ok / Result.NotFound responses. The Application layer may call this via IApplicationMediator.QueryXxx(...)."
+        }
+      ]
+    },
+    "isCommand": {
+      "type": "computed",
+      "value": "(featureType == \"command\")"
+    },
+    "isQuery": {
+      "type": "computed",
+      "value": "(featureType == \"query\")"
+    },
+    "include-endpoint": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include the endpoint mapping file"
+    }
+  },
+  "sources": [
+    {
+      "source": ".",
+      "include": [
+        "CreateSample.cs",
+        "CreateSample.Contracts.cs",
+        "CreateSample.Endpoint.cs"
+      ],
+      "modifiers": [
+        {
+          "condition": "(!include-endpoint)",
+          "exclude": [ "CreateSample.Endpoint.cs" ]
+        }
+      ]
+    }
+  ]
+}

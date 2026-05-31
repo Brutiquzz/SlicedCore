@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 540" width="520" height="540" font-family="Segoe UI, Arial, sans-serif">
+
+  <!-- Full outer circle background -->
+  <circle cx="260" cy="270" r="230" fill="#e8e8e8" />
+
+  <!-- Domain slices (6 equal segments, 60° each) -->
+  <!-- Domain: Orders (top-right, 330°–30°, highlighted) -->
+  <path d="M260,270 L429,155 A230,230 0 0,1 429,385 Z" fill="#d0e8f5" />
+
+  <!-- Domain: Inventory (right, 30°–90°) ... wait, let me use proper angles -->
+  <!-- Segment 1: -90° to -30° (top-right): Orders (highlighted) -->
+  <!-- angle in SVG: 0° is 3 o'clock, going clockwise -->
+  <!-- Segment positions (cx=260, cy=270, r=230): -->
+  <!-- Seg 1: -90°→-30°  → 270°→330° standard -->
+
+  <!-- I'll compute arc endpoints manually for 6 segments of 60° -->
+  <!-- r=230, center=(260,270) -->
+  <!-- Angles (standard math, CCW from east, but SVG is CW from east): -->
+  <!-- Seg 0: 270°→330° (12 o'clock to 2 o'clock) = top-right -->
+  <!-- x = 260 + 230*cos(θ), y = 270 + 230*sin(θ) — SVG y-down so sin flips -->
+  <!-- θ=270° → (260, 40)   θ=330° → (459, 155)  θ=30° → (459, 385) -->
+  <!-- θ=90°  → (260, 500)  θ=150° → (61, 385)   θ=210° → (61, 155) -->
+
+  <!-- Segment 0 (highlighted - Orders): 270°→330° -->
+  <path d="M260,270 L260,40 A230,230 0 0,1 459,155 Z" fill="#b8d8f0" stroke="#fff" stroke-width="3"/>
+
+  <!-- Segment 1: 330°→30° -->
+  <path d="M260,270 L459,155 A230,230 0 0,1 459,385 Z" fill="#dde8d0" stroke="#fff" stroke-width="3"/>
+
+  <!-- Segment 2: 30°→90° -->
+  <path d="M260,270 L459,385 A230,230 0 0,1 260,500 Z" fill="#dde8d0" stroke="#fff" stroke-width="3"/>
+
+  <!-- Segment 3: 90°→150° -->
+  <path d="M260,270 L260,500 A230,230 0 0,1 61,385 Z" fill="#dde8d0" stroke="#fff" stroke-width="3"/>
+
+  <!-- Segment 4: 150°→210° -->
+  <path d="M260,270 L61,385 A230,230 0 0,1 61,155 Z" fill="#dde8d0" stroke="#fff" stroke-width="3"/>
+
+  <!-- Segment 5: 210°→270° -->
+  <path d="M260,270 L61,155 A230,230 0 0,1 260,40 Z" fill="#dde8d0" stroke="#fff" stroke-width="3"/>
+
+  <!-- Inner ring boundary (middle ring) -->
+  <circle cx="260" cy="270" r="150" fill="none" stroke="#fff" stroke-width="3"/>
+
+  <!-- Fill inner ring segments to match outer -->
+  <!-- Segment 0 inner (highlighted) -->
+  <path d="M260,270 L260,120 A150,150 0 0,1 390,195 Z" fill="#90be6d" stroke="#fff" stroke-width="3"/>
+  <!-- Segment 1 inner -->
+  <path d="M260,270 L390,195 A150,150 0 0,1 390,345 Z" fill="#a8cc88" stroke="#fff" stroke-width="3"/>
+  <!-- Segment 2 inner -->
+  <path d="M260,270 L390,345 A150,150 0 0,1 260,420 Z" fill="#a8cc88" stroke="#fff" stroke-width="3"/>
+  <!-- Segment 3 inner -->
+  <path d="M260,270 L260,420 A150,150 0 0,1 130,345 Z" fill="#a8cc88" stroke="#fff" stroke-width="3"/>
+  <!-- Segment 4 inner -->
+  <path d="M260,270 L130,345 A150,150 0 0,1 130,195 Z" fill="#a8cc88" stroke="#fff" stroke-width="3"/>
+  <!-- Segment 5 inner -->
+  <path d="M260,270 L130,195 A150,150 0 0,1 260,120 Z" fill="#a8cc88" stroke="#fff" stroke-width="3"/>
+
+  <!-- Centre circle: Domain Models -->
+  <circle cx="260" cy="270" r="70" fill="#4a90d9" />
+  <text x="260" y="262" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Domain</text>
+  <text x="260" y="278" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Models</text>
+
+  <!-- Domain labels in outer ring -->
+  <!-- Seg 0 (Orders, highlighted, top-right) -->
+  <text x="340" y="118" text-anchor="middle" fill="#2c5f7a" font-size="13" font-weight="bold">Orders</text>
+  <text x="340" y="134" text-anchor="middle" fill="#2c5f7a" font-size="10">(expanded)</text>
+
+  <!-- Seg 1 (right) -->
+  <text x="418" y="278" text-anchor="middle" fill="#4a6741" font-size="12" font-weight="bold">Inventory</text>
+
+  <!-- Seg 2 (bottom-right) -->
+  <text x="365" y="430" text-anchor="middle" fill="#4a6741" font-size="12" font-weight="bold">Payments</text>
+
+  <!-- Seg 3 (bottom-left) -->
+  <text x="155" y="430" text-anchor="middle" fill="#4a6741" font-size="12" font-weight="bold">Shipping</text>
+
+  <!-- Seg 4 (left) -->
+  <text x="100" y="278" text-anchor="middle" fill="#4a6741" font-size="12" font-weight="bold">Customers</text>
+
+  <!-- Seg 5 (top-left) -->
+  <text x="178" y="118" text-anchor="middle" fill="#4a6741" font-size="12" font-weight="bold">Notifications</text>
+
+  <!-- Private Contracts labels in middle ring -->
+  <text x="333" y="193" text-anchor="middle" fill="#fff" font-size="9">Private</text>
+  <text x="333" y="204" text-anchor="middle" fill="#fff" font-size="9">Contracts</text>
+
+  <!-- Arrow pointing to the Orders slice with annotation -->
+  <line x1="310" y1="80" x2="290" y2="102" stroke="#2c5f7a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="328" y="74" text-anchor="middle" fill="#2c5f7a" font-size="10" font-style="italic">see detail diagram</text>
+
+  <defs>
+	<marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+	  <path d="M0,0 L0,6 L8,3 Z" fill="#2c5f7a"/>
+	</marker>
+  </defs>
+
+  <!-- Legend -->
+  <rect x="30" y="468" width="14" height="14" fill="#4a90d9" rx="2"/>
+  <text x="50" y="480" fill="#444" font-size="12">Domain Models — shared within each domain</text>
+
+  <rect x="30" y="488" width="14" height="14" fill="#90be6d" rx="2"/>
+  <text x="50" y="500" fill="#444" font-size="12">Private Contracts — scoped to each feature</text>
+
+  <rect x="30" y="508" width="14" height="14" fill="#d0e8f5" rx="2"/>
+  <text x="50" y="520" fill="#444" font-size="12">Domain — the outermost boundary (Orders expanded in detail diagram)</text>
+
+</svg>

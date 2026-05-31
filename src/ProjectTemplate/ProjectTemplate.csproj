@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<!-- Suppress experimental warning for HmacRedactor (Microsoft.Extensions.Compliance.Redaction) -->
+		<NoWarn>$(NoWarn);EXTEXP0002</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Ardalis.Result" />
+		<PackageReference Include="Ardalis.Result.AspNetCore" />
+		<PackageReference Include="Ardalis.Result.FluentValidation" />
+		<PackageReference Include="Asp.Versioning.Http" />
+		<PackageReference Include="Cortex.Mediator" />
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+		<PackageReference Include="Mapster" />
+		<PackageReference Include="Mapster.Async" />
+		<PackageReference Include="Mapster.Core" />
+		<PackageReference Include="Mapster.EFCore" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Compliance.Redaction" />
+		<PackageReference Include="Microsoft.Extensions.Telemetry" />
+		<PackageReference Include="Scalar.AspNetCore" />
+		<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ProjectTemplate.Framework\ProjectTemplate.Framework.csproj" />
+		<ProjectReference Include="..\ProjectTemplate.Generators\ProjectTemplate.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+		<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Generated\**\*.cs" />
+		<Compile Remove="Domains\.template\**\*.cs" />
+		<Content Remove="Domains\.template\**" />
+		<None Remove="Domains\.template\**" />
+		<EmbeddedResource Remove="Domains\.template\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Dependencies\OpenApi\" />
+	</ItemGroup>
+
+	<!--<Target Name="Mapster" AfterTargets="AfterBuild">
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tool restore" />
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet mapster model -a &quot;$(TargetDir)$(ProjectName).dll&quot;" />
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet mapster extension -a &quot;$(TargetDir)$(ProjectName).dll&quot;" />
+		<Exec WorkingDirectory="$(ProjectDir)" Command="dotnet mapster mapper -a &quot;$(TargetDir)$(ProjectName).dll&quot;" />
+	</Target>-->
+
+</Project>

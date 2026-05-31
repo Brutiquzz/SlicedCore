@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Brutiquzz",
+  "classifications": [ "Domain", "Template" ],
+  "identity": "Brutiquzz.Templates.Domain",
+  "name": "Domain Template",
+  "shortName": "domain",
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  },
+  "sourceName": "Sample",
+  "preferNameDirectory": false,
+  "symbols": {
+    "projectName": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "ProjectTemplate",
+      "replaces": "ProjectTemplate",
+      "description": "The root namespace / project name of the target solution"
+    }
+  },
+  "sources": [
+    {
+      "source": ".",
+      "include": [ "Domain.cs" ]
+    }
+  ]
+}

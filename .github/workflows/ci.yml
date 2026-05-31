@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Application Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --no-incremental --configuration Release --no-restore
+
+    - name: Run application tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
+
+  template-tests:
+    name: Template Smoke Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build sandbox image
+      run: docker build -f tests/Dockerfile -t template-tests:ci .
+
+    - name: Run template tests in container
+      run: docker run --rm template-tests:ci
+
+  generator-tests:
+    name: Generator Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/ProjectTemplate.Generators.Tests/ProjectTemplate.Generators.Tests.csproj
+
+    - name: Build generator tests
+      run: dotnet build src/ProjectTemplate.Generators.Tests/ProjectTemplate.Generators.Tests.csproj --configuration Release --no-restore
+
+    - name: Run generator tests
+      run: dotnet run --project src/ProjectTemplate.Generators.Tests/ProjectTemplate.Generators.Tests.csproj --configuration Release --no-build

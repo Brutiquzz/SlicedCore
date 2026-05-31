@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+	<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="all" />
+	<PackageReference Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing" />
+	<PackageReference Include="TUnit" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\ProjectTemplate.Generators\ProjectTemplate.Generators.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+{
+  "Logging": {
+	"LogLevel": {
+	  "Default": "Information",
+	  "Microsoft.AspNetCore": "Warning"
+	}
+  },
+  "ConnectionStrings": {
+	"DefaultConnection": "Server=.;Database=ProjectTemplateDev;Trusted_Connection=True;TrustServerCertificate=True;"
+  },
+  "HmacRedactorOptions": {
+	"KeyId": 1,
+	"Key": "<generate-with: openssl rand -base64 32>"
+  }
+}

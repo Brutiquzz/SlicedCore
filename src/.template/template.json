@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Me",
+  "classifications": [ "My", "Solution" ],
+  "identity": "Brutiquzz.Template",
+  "name": "Solution Template",
+  "shortName": "my-sln",
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "sourceName": "SolutionTemplate",
+  "preferNameDirectory": true
+}

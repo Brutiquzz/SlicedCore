@@ -1,0 +1,14 @@
+global using Ardalis.Result;
+global using Ardalis.Result.AspNetCore;
+global using Ardalis.Result.FluentValidation;
+global using Cortex.Mediator;
+global using FluentValidation;
+global using Mapster;
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Routing;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using ProjectTemplate.Compliance;
+global using ProjectTemplate.Framework;
+global using Scalar.AspNetCore;

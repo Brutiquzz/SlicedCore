@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>ProjectTemplate.Framework</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Framework base classes, layer builders, attributes, compliance helpers, and endpoint/handler scanning for the ProjectTemplate architecture.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.Result" />
+    <PackageReference Include="Asp.Versioning.Http" />
+    <PackageReference Include="Cortex.Mediator" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Compliance.Redaction" />
+    <PackageReference Include="Microsoft.Extensions.Telemetry" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Dependencies\Mediator\" />
+  </ItemGroup>
+
+</Project>
