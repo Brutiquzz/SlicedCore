@@ -271,10 +271,11 @@ This separation ensures the main application (`ProjectTemplate`) can reference i
 
 Two `dotnet new` item templates live in `src/ProjectTemplate/Domains/.template/`:
 
-### **Feature Template** (`dotnet new feature -n GetSample`)
+### **Feature Template** (`dotnet new feature -n GetSample --operation GET`)
 - **Location**: `Domains/.template/feature/.template.config/template.json`
 - **Source files**: References `Domains/Sample/CreateSample.cs`, `CreateSample.Contracts.cs`, `CreateSample.Endpoint.cs` via relative path
 - **Substitution**: `sourceName: "CreateSample"` — all occurrences of `CreateSample` in file names and contents are replaced with the user-provided name
+- **Operation parameter**: `--operation GET|POST|PUT|PATCH|DELETE` — determines the endpoint HTTP method, route pattern, and CQRS feature type (`GET` → query; all others → command)
 - **Optional endpoint**: `--include-endpoint false` excludes `CreateSample.Endpoint.cs`
 
 ### **Domain Template** (`dotnet new domain -n Order`)
