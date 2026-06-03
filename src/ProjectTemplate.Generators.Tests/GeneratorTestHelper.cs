@@ -28,6 +28,15 @@ internal static class GeneratorTestHelper
             [System.AttributeUsage(System.AttributeTargets.Interface)]
             public sealed class PersistenceModelAttribute : System.Attribute { }
 
+            public enum FeatureType { Command = 0, Query = 1 }
+
+            [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false)]
+            public sealed class FeatureAttribute : System.Attribute
+            {
+                public FeatureType FeatureType { get; }
+                public FeatureAttribute(FeatureType featureType = FeatureType.Command) => FeatureType = featureType;
+            }
+
             [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false)]
             public sealed class PersistenceModelConfigurationAttribute : System.Attribute
             {

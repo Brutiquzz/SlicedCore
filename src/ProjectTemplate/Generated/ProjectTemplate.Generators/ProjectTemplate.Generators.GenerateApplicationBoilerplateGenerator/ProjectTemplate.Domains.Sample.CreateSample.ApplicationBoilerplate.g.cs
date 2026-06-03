@@ -69,6 +69,12 @@ public partial class CreateSample
         public global::ProjectTemplate.Domains.Sample.CreateSample.Core.IPersistenceRequestDTO Request { get; }
     }
 
+    private sealed record CreateSamplePersistenceRequestDTO : global::ProjectTemplate.Domains.Sample.CreateSample.Core.IPersistenceRequestDTO
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Name2 { get; set; } = string.Empty;
+    }
+
     private sealed class ApplicationResponseDTO : global::ProjectTemplate.Domains.Sample.CreateSample.Core.IApplicationResponseDTO
     {
         public int Id { get; set; }

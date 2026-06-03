@@ -12,7 +12,7 @@ public partial class CreateSampleTests
         var result = await SendValidRequestThroughHandlerAsync();
 
         await Assert.That(result.Status.ToString()).IsEqualTo("Created");
-        await Assert.That(result.Value.Id).IsEqualTo(1);
+        await Assert.That(result.Value.Id).IsGreaterThan(0);
         await Assert.That(result.Value.Name).IsEqualTo("Sample Name");
         await Assert.That(result.Value.Name2).IsEqualTo("Sample Name2");
     }

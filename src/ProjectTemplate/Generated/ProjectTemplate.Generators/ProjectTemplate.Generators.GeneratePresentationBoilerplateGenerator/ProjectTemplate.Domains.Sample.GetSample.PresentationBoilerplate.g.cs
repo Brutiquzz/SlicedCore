@@ -70,6 +70,11 @@ public partial class GetSample
         }
     }
 
+    private sealed record GetSampleRequestDTO : global::ProjectTemplate.Domains.Sample.GetSample.Core.IApplicationRequestDTO
+    {
+        public int Id { get; set; }
+    }
+
     private sealed record GetSampleRequest : global::ProjectTemplate.Domains.Sample.GetSample.IGetSampleRequest
     {
         public int Id { get; set; }

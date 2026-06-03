@@ -23,6 +23,13 @@ public class GenerateExtensionsBoilerplateGeneratorTests
                 string Name { get; set; }
             }
         }
+
+        [Feature(FeatureType.Command)]
+        public partial class CreateOrder
+        {
+            public interface ICreateOrderRequest { string Name { get; set; } }
+            public interface ICreateOrderResponse { int Id { get; set; } string Name { get; set; } }
+        }
         """;
 
     [Test]
@@ -38,7 +45,7 @@ public class GenerateExtensionsBoilerplateGeneratorTests
     {
         var result = GeneratorTestHelper.Run<GenerateExtensionsBoilerplateGenerator>(DomainSource);
 
-        await Assert.That(result.GeneratedSources[0].HintName).IsEqualTo("CreateOrder.Extensions.g.cs");
+        await Assert.That(result.GeneratedSources[0].HintName).IsEqualTo("MyApp.Domains.Order.CreateOrder.Extensions.g.cs");
     }
 
     [Test]
@@ -47,7 +54,7 @@ public class GenerateExtensionsBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateExtensionsBoilerplateGenerator>(DomainSource));
 
-        await Assert.That(sources["CreateOrder.Extensions.g.cs"])
+        await Assert.That(sources["MyApp.Domains.Order.CreateOrder.Extensions.g.cs"])
             .Contains("namespace MyApp.Domains.Order;");
     }
 
@@ -57,7 +64,7 @@ public class GenerateExtensionsBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateExtensionsBoilerplateGenerator>(DomainSource));
 
-        await Assert.That(sources["CreateOrder.Extensions.g.cs"])
+        await Assert.That(sources["MyApp.Domains.Order.CreateOrder.Extensions.g.cs"])
             .Contains("CreateOrder");
     }
 

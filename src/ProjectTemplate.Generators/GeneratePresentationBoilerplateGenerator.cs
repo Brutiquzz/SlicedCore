@@ -76,6 +76,13 @@ public sealed class GeneratePresentationBoilerplateGenerator : IIncrementalGener
         AppendApplicationEvent(builder, targetNamespace, featureName, coreNs);
         builder.AppendLine();
 
+        var applicationRequestDtoInterface = coreType.GetTypeMembers("IApplicationRequestDTO").FirstOrDefault();
+        if (applicationRequestDtoInterface is not null)
+        {
+            AppendRequestDto(builder, featureName, applicationRequestDtoInterface);
+            builder.AppendLine();
+        }
+
         var requestInterface = featureSymbol.GetTypeMembers($"I{featureName}Request").FirstOrDefault();
         if (requestInterface is not null)
         {

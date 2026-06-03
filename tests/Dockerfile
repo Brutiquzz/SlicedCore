@@ -6,7 +6,7 @@
 # The entire repo is copied into the image so dotnet new install works
 # against the on-disk template manifests without touching the host environment.
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 # Install PowerShell (pwsh) — required by Test-Templates.ps1
 RUN apt-get update \

@@ -18,7 +18,7 @@
 	  6. Clean up the temporary output directory
 
 .NOTES
-	Requires: .NET 9 SDK, pwsh (PowerShell 7+)
+	Requires: .NET 10 SDK, pwsh (PowerShell 7+)
 #>
 
 [CmdletBinding()]

@@ -33,12 +33,33 @@ public static class LayerHandlerScanner
                 var commandType = genericArgs[0];
                 var resultType = genericArgs[1];
 
-                // Register for the concrete command type
+                // Register for the declared command type (may be an interface)
                 services.AddTransient(handlerInterface, handlerType);
 
-                // Register for each ICommand interface the concrete command implements
-                // This resolves the interface-vs-concrete mismatch the mediator encounters
-                // Skip the raw ICommand<> base interface — it is too generic and causes DI validation errors
+                // If commandType is an interface, also register for every concrete type in the
+                // assembly that implements it — the mediator dispatches with the concrete event record.
+                if (commandType.IsInterface)
+                {
+                    foreach (var concreteCommand in assembly.GetTypes()
+                        .Where(t => t.IsClass && !t.IsAbstract && commandType.IsAssignableFrom(t)))
+                    {
+                        Type concreteHandlerServiceType;
+                        try
+                        {
+                            concreteHandlerServiceType = typeof(ICommandHandler<,>)
+                                .MakeGenericType(concreteCommand, resultType);
+                        }
+                        catch (ArgumentException)
+                        {
+                            continue;
+                        }
+
+                        services.AddTransient(concreteHandlerServiceType, handlerType);
+                    }
+                }
+
+                // Also register for each ICommand interface the concrete command implements
+                // (skipping the raw ICommand<> base interface to avoid DI validation errors)
                 foreach (var commandInterface in commandType.GetInterfaces()
                     .Where(i => !(i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>))))
                 {

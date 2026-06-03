@@ -23,6 +23,13 @@ public class GenerateCoreBoilerplateGeneratorTests
                 string Name { get; set; }
             }
         }
+
+        [Feature(FeatureType.Command)]
+        public partial class CreateOrder
+        {
+            public interface ICreateOrderRequest { string Name { get; set; } }
+            public interface ICreateOrderResponse { int Id { get; set; } string Name { get; set; } }
+        }
         """;
 
     [Test]
@@ -38,7 +45,7 @@ public class GenerateCoreBoilerplateGeneratorTests
     {
         var result = GeneratorTestHelper.Run<GenerateCoreBoilerplateGenerator>(DomainSource);
 
-        await Assert.That(result.GeneratedSources[0].HintName).IsEqualTo("CreateOrder.Core.g.cs");
+        await Assert.That(result.GeneratedSources[0].HintName).IsEqualTo("MyApp.Domains.Order.CreateOrder.Core.g.cs");
     }
 
     [Test]
@@ -47,7 +54,7 @@ public class GenerateCoreBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateCoreBoilerplateGenerator>(DomainSource));
 
-        await Assert.That(sources["CreateOrder.Core.g.cs"]).Contains("namespace MyApp.Domains.Order;");
+        await Assert.That(sources["MyApp.Domains.Order.CreateOrder.Core.g.cs"]).Contains("namespace MyApp.Domains.Order;");
     }
 
     [Test]
@@ -56,9 +63,9 @@ public class GenerateCoreBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateCoreBoilerplateGenerator>(DomainSource));
 
-        var source = sources["CreateOrder.Core.g.cs"];
+        var source = sources["MyApp.Domains.Order.CreateOrder.Core.g.cs"];
         await Assert.That(source).Contains("public partial class CreateOrder");
-        await Assert.That(source).Contains("public sealed partial class Core");
+        await Assert.That(source).Contains("protected sealed partial class Core");
     }
 
     [Test]
@@ -67,7 +74,7 @@ public class GenerateCoreBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateCoreBoilerplateGenerator>(DomainSource));
 
-        await Assert.That(sources["CreateOrder.Core.g.cs"])
+        await Assert.That(sources["MyApp.Domains.Order.CreateOrder.Core.g.cs"])
             .Contains("ICreateOrderEventPresentationLayer");
     }
 
@@ -77,7 +84,7 @@ public class GenerateCoreBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateCoreBoilerplateGenerator>(DomainSource));
 
-        await Assert.That(sources["CreateOrder.Core.g.cs"])
+        await Assert.That(sources["MyApp.Domains.Order.CreateOrder.Core.g.cs"])
             .Contains("ICreateOrderEventApplicationLayer");
     }
 
@@ -87,7 +94,7 @@ public class GenerateCoreBoilerplateGeneratorTests
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateCoreBoilerplateGenerator>(DomainSource));
 
-        await Assert.That(sources["CreateOrder.Core.g.cs"])
+        await Assert.That(sources["MyApp.Domains.Order.CreateOrder.Core.g.cs"])
             .Contains("ICreateOrderEventInfrastructureLayer");
     }
 
