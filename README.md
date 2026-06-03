@@ -102,14 +102,14 @@ This creates `Domain.cs` with business model, persistence entity, and EF Core co
 
 ```bash
 cd src/MyApi/Domains/Order
-dotnet new feature -n CreateOrder --projectName MyApi
+dotnet new feature -n CreateOrder --projectName MyApi --operation POST
 ```
 
 | Parameter | Required | Description |
 |---|---|---|
-| `-n`, `--name` | ✅ | Feature name (e.g. `CreateOrder`, `GetOrder`). The domain name is derived automatically by stripping the verb prefix (`Create`, `Get`, `Update`, `Delete`, `List`). |
+| `-n`, `--name` | ✅ | Feature name (e.g. `CreateOrder`, `GetOrder`). The domain name is derived automatically by stripping the verb prefix (`Create`, `Get`, `Update`, `Delete`, `List`, `Patch`). |
 | `--projectName` | | Root namespace of the target project (e.g. `MyApi`). Must match the project's assembly name. Defaults to `ProjectTemplate` — always set this explicitly. |
-| `--featureType` | | `command` (default) or `query`. Controls the CQRS event type, generated infrastructure logic, and endpoint HTTP method. |
+| `--operation` | | HTTP operation: `GET`, `POST` (default), `PUT`, `PATCH`, or `DELETE`. Controls the endpoint HTTP method, route pattern, status codes, and generated CQRS feature type (`GET` → query; all others → command). |
 | `--include-endpoint` | | `true` (default) or `false`. Set to `false` to skip generating the endpoint file. |
 
 This creates:
@@ -119,16 +119,34 @@ This creates:
 
 **Examples:**
 
-Scaffold a read-only query feature without an endpoint:
+Scaffold a GET (query) feature without an endpoint:
 
 ```bash
-dotnet new feature -n GetOrder --projectName MyApi --featureType query --include-endpoint false
+dotnet new feature -n GetOrder --projectName MyApi --operation GET --include-endpoint false
 ```
 
-Scaffold a command feature with an endpoint (the default):
+Scaffold a POST (create) feature with an endpoint:
 
 ```bash
-dotnet new feature -n DeleteOrder --projectName MyApi --featureType command
+dotnet new feature -n CreateOrder --projectName MyApi --operation POST
+```
+
+Scaffold a PUT (replace) feature:
+
+```bash
+dotnet new feature -n UpdateOrder --projectName MyApi --operation PUT
+```
+
+Scaffold a PATCH (partial update) feature:
+
+```bash
+dotnet new feature -n PatchOrderStatus --projectName MyApi --operation PATCH
+```
+
+Scaffold a DELETE feature:
+
+```bash
+dotnet new feature -n DeleteOrder --projectName MyApi --operation DELETE
 ```
 
 The source generator automatically produces the concrete DTO records, command events, and mediator extension methods from the contract interfaces — do not write these manually.
