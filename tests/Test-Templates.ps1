@@ -113,6 +113,10 @@ try {
 		dotnet new domain -n User -o $UserDir --projectName $ProjectName
 	}
 
+	Invoke-Checked "dotnet new feature -n CreateUser (with endpoint, POST)" {
+		dotnet new feature -n CreateUser -o $UserDir --projectName $ProjectName --operation POST
+	}
+
 	Invoke-Checked "dotnet new feature -n GetUser (GET)" {
 		dotnet new feature -n GetUser -o $UserDir --projectName $ProjectName --operation GET
 	}
@@ -121,8 +125,8 @@ try {
 		dotnet new feature -n UpdateUser -o $UserDir --projectName $ProjectName --operation PUT
 	}
 
-	Invoke-Checked "dotnet new feature -n PatchUserEmail (PATCH)" {
-		dotnet new feature -n PatchUserEmail -o $UserDir --projectName $ProjectName --operation PATCH
+	Invoke-Checked "dotnet new feature -n PatchUser (PATCH)" {
+		dotnet new feature -n PatchUser -o $UserDir --projectName $ProjectName --operation PATCH
 	}
 
 	Invoke-Checked "dotnet new feature -n DeleteUser (DELETE)" {

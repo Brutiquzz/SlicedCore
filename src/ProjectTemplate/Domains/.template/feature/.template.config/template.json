@@ -110,6 +110,18 @@
       "type": "computed",
       "value": "(operation == \"DELETE\")"
     },
+    "isIdOnly": {
+      "type": "computed",
+      "value": "(operation == \"GET\" || operation == \"DELETE\")"
+    },
+    "isBodyWithId": {
+      "type": "computed",
+      "value": "(operation == \"PUT\" || operation == \"PATCH\")"
+    },
+    "isBodyOnly": {
+      "type": "computed",
+      "value": "(operation == \"POST\")"
+    },
     "include-endpoint": {
       "type": "parameter",
       "datatype": "bool",

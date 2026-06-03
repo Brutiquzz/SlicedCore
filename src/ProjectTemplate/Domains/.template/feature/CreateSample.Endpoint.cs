@@ -22,6 +22,7 @@ public partial class CreateSample
 //#elseif (isPut)
                 builder.MapPut("/sample/{id:int}", async (int id, CreateSampleRequest request, IMediator mediator, CancellationToken cancellationToken) =>
                 {
+                    request.Id = id;
                     return (await mediator.CreateSample(request, cancellationToken)).ToMinimalApiResult();
                 })
                     .WithName("UpdateSample")
@@ -34,6 +35,7 @@ public partial class CreateSample
 //#elseif (isPatch)
                 builder.MapPatch("/sample/{id:int}", async (int id, CreateSampleRequest request, IMediator mediator, CancellationToken cancellationToken) =>
                 {
+                    request.Id = id;
                     return (await mediator.CreateSample(request, cancellationToken)).ToMinimalApiResult();
                 })
                     .WithName("PatchSample")
@@ -46,12 +48,12 @@ public partial class CreateSample
 //#elseif (isDelete)
                 builder.MapDelete("/sample/{id:int}", async (int id, IMediator mediator, CancellationToken cancellationToken) =>
                 {
-                    return (await mediator.CreateSample().WithId(id).Send(cancellationToken)).ToMinimalApiResult();
+                    return (await mediator.CreateSample(new CreateSampleRequest { Id = id }, cancellationToken)).ToMinimalApiResult();
                 })
                     .WithName("DeleteSample")
                     .WithSummary("Deleting a Sample")
                     .WithDescription("This is a description on how a sample gets deleted")
-                    .Produces(StatusCodes.Status200OK)
+                    .Produces(StatusCodes.Status204NoContent)
                     .Produces(StatusCodes.Status404NotFound)
 //#else
                 builder.MapGet("/sample/{id:int}", async (int id, IMediator mediator, CancellationToken cancellationToken) =>
