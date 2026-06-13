@@ -1,11 +1,13 @@
 using Asp.Versioning;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Compliance.Redaction;
 using ProjectTemplate.Dependencies;
 using ProjectTemplate.Dependencies.OpenApi;
 using ProjectTemplate.Dependencies.Resilience;
 using ProjectTemplate.Framework;
+using System.IO.Compression;
 using System.Reflection;
 
 namespace ProjectTemplate;
@@ -99,6 +101,28 @@ public partial class Program
         // Resilience: registers the Default HTTP client with retry, circuit breaker, and timeout
         // policies driven by the "Resilience" section of appsettings.json.
         builder.Services.AddSlicedCoreResilience(builder.Configuration);
+
+        // Response Compression: enables Brotli and Gzip compression for all JSON, XML, and
+        // text-based responses. CompressionLevel.Fastest balances CPU usage with payload reduction.
+        // EnableForHttps is safe here because the application controls both endpoints and content,
+        // so BREACH-style attacks are not a concern for typical API payloads.
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+            options.MimeTypes = ResponseCompressionDefaults.MimeTypes;
+        });
+
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
+
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
 
         // Health Checks: registers the built-in health check infrastructure.
         // Add dependency-specific checks by chaining extension methods, for example:
