@@ -594,8 +594,8 @@ namespace Microsoft.AspNetCore.OpenApi.Generated
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.AspNetCore.OpenApi.SourceGenerators, Version=10.0.8.0, Culture=neutral, PublicKeyToken=adb9793829ddae60", "10.0.8.0")]
     file static class GeneratedServiceCollectionExtensions
     {
-        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "AmaIoB+RiuBqPxbdTPQQickEAABQcm9ncmFtLlNlcnZpY2VzLmNz")]
-        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "AmaIoB+RiuBqPxbdTPQQiUEFAABQcm9ncmFtLlNlcnZpY2VzLmNz")]
+        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "pKbkIPoNs7M9eCQk04VUf6gEAABQcm9ncmFtLlNlcnZpY2VzLmNz")]
+        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "pKbkIPoNs7M9eCQk04VUfx8FAABQcm9ncmFtLlNlcnZpY2VzLmNz")]
         public static IServiceCollection AddOpenApi(this IServiceCollection services, string documentName, Action<OpenApiOptions> configureOptions)
         {
             // This overload is not intercepted.
