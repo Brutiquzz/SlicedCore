@@ -22,8 +22,18 @@ public static class ResilienceServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<ResilienceOptions>(
-            configuration.GetSection(ResilienceOptions.SectionName));
+        services.AddOptions<ResilienceOptions>()
+            .Bind(configuration.GetSection(ResilienceOptions.SectionName))
+            .Validate(o =>
+                o.Retry.MaxRetryAttempts >= 0 &&
+                o.Retry.DelaySeconds >= 0 &&
+                o.CircuitBreaker.FailureRatio is >= 0 and <= 1 &&
+                o.CircuitBreaker.SamplingDurationSeconds > 0 &&
+                o.CircuitBreaker.MinimumThroughput > 0 &&
+                o.CircuitBreaker.BreakDurationSeconds >= 0 &&
+                o.Timeout.AttemptTimeoutSeconds > 0,
+                "Invalid Resilience configuration values.")
+            .ValidateOnStart();
 
         services.AddHttpClient("Default")
             .AddResilienceHandler("slicedcore-resilience", (builder, context) =>
