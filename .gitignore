@@ -499,3 +499,6 @@ appsettings.Production.json
 /.vs
 /src/ProjectTemplate/bin/*
 /src/ProjectTemplate/obj/**
+
+# Third-party compiler-generated output (unstable InterceptsLocationAttribute tokens)
+/src/ProjectTemplate/Generated/Microsoft.AspNetCore.OpenApi.SourceGenerators/
