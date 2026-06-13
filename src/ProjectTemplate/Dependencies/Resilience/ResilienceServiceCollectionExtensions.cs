@@ -53,6 +53,7 @@ public static class ResilienceServiceCollectionExtensions
                             .Handle<HttpRequestException>()
                             .HandleResult(response =>
                                 (int)response.StatusCode is 408 or 429 || (int)response.StatusCode >= 500)
+                    })
                     .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
                     {
                         FailureRatio = options.CircuitBreaker.FailureRatio,
