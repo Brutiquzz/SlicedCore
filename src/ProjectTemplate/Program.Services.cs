@@ -9,6 +9,9 @@ using ProjectTemplate.Dependencies.Resilience;
 using ProjectTemplate.Framework;
 using System.IO.Compression;
 using System.Reflection;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjectTemplate;
 
@@ -31,6 +34,20 @@ public partial class Program
                 new HeaderApiVersionReader("X-Api-Version"),
                 new QueryStringApiVersionReader("api-version")
             );
+        });
+
+        // JSON Serialization: opinionated defaults for all minimal-API responses and requests.
+        // - CamelCase ensures consistent property naming across all API responses.
+        // - WhenWritingNull reduces payload size by omitting properties with null values.
+        // - PropertyNameCaseInsensitive allows clients to send JSON with any casing.
+        // - UnsafeRelaxedJsonEscaping avoids unnecessary Unicode escaping (e.g. '+', '/'),
+        //   producing cleaner and slightly smaller JSON output.
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            options.SerializerOptions.PropertyNameCaseInsensitive = true;
+            options.SerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
         });
 
         // OpenAPI

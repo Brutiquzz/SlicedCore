@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GenerateHttpFileGenerator` source generator that auto-maintains `ProjectTemplate.http`
   by scanning `*FeatureEndpoint` types and emitting a valid C# wrapper; an MSBuild inline
   task then writes the actual `.http` file to disk after each build.
+- Opinionated `System.Text.Json` defaults configured via `ConfigureHttpJsonOptions` in
+  `Program.Services.cs`: camelCase property naming, null-value omission, case-insensitive
+  deserialization, and relaxed Unicode encoding.
 - `ProjectTemplate.Generators.Tests` project with Roslyn in-memory test harness covering
   all source generators (`GenerateCoreBoilerplate`, `GenerateExtensionsBoilerplate`,
   `GeneratePresentationBoilerplate`, `GenerateDbContext`,
