@@ -505,6 +505,15 @@ All runtime configuration lives in `appsettings.json`. Override per environment 
 | `Cors` | `AllowCredentials` | `true` / `false` |
 | `HmacRedactorOptions` | `Key` | Base-64 HMAC key used by PII redaction. Generate with `openssl rand -base64 32`. |
 | `HmacRedactorOptions` | `KeyId` | Numeric key identifier for key rotation. |
+| `Resilience` | `Retry.MaxRetryAttempts` | Maximum number of retry attempts (default: `4`). |
+| `Resilience` | `Retry.DelaySeconds` | Base delay in seconds between retries (default: `2`). |
+| `Resilience` | `Retry.UseJitter` | Add random jitter to retry delay to avoid thundering herds (default: `true`). |
+| `Resilience` | `Retry.BackoffType` | `Exponential` (default), `Linear`, or `Constant`. |
+| `Resilience` | `CircuitBreaker.FailureRatio` | Failure ratio 0–1 that trips the circuit (default: `0.5`). |
+| `Resilience` | `CircuitBreaker.SamplingDurationSeconds` | Sampling window in seconds (default: `30`). |
+| `Resilience` | `CircuitBreaker.MinimumThroughput` | Minimum requests before circuit can trip (default: `10`). |
+| `Resilience` | `CircuitBreaker.BreakDurationSeconds` | Duration in seconds the circuit stays open (default: `15`). |
+| `Resilience` | `Timeout.AttemptTimeoutSeconds` | Per-attempt timeout in seconds (default: `10`). |
 
 ---
 

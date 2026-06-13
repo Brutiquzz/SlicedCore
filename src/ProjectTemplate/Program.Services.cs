@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Compliance.Redaction;
 using ProjectTemplate.Dependencies;
 using ProjectTemplate.Dependencies.OpenApi;
+using ProjectTemplate.Dependencies.Resilience;
 using ProjectTemplate.Framework;
 using System.Reflection;
 
@@ -94,6 +95,10 @@ public partial class Program
         AddPresentationLayerDependencies(new PresentationLayerBuilder(builder));
 
         builder.Services.AddProblemDetails();
+
+        // Resilience: registers the Default HTTP client with retry, circuit breaker, and timeout
+        // policies driven by the "Resilience" section of appsettings.json.
+        builder.Services.AddSlicedCoreResilience(builder.Configuration);
 
         // Health Checks: registers the built-in health check infrastructure.
         // Add dependency-specific checks by chaining extension methods, for example:

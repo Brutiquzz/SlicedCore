@@ -26,6 +26,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Compliance.Redaction" />
+		<PackageReference Include="Microsoft.Extensions.Http.Resilience" />
 		<PackageReference Include="Microsoft.Extensions.Telemetry" />
 		<PackageReference Include="Scalar.AspNetCore" />
 		<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" />

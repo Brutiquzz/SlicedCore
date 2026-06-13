@@ -26,7 +26,7 @@
   <!-- Compliance / Telemetry -->
   <ItemGroup>
 	<PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.6.0" />
-	<PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.6.0" />
+	<PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.7.0" />
   </ItemGroup>
 
   <!-- Application libraries -->
@@ -41,6 +41,7 @@
 	<PackageVersion Include="Mapster.Async" Version="10.0.7" />
 	<PackageVersion Include="Mapster.Core" Version="10.0.7" />
 	<PackageVersion Include="Mapster.EFCore" Version="10.0.7" />
+	<PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
   </ItemGroup>
 
   <!-- Testing -->
