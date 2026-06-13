@@ -102,10 +102,10 @@ public partial class Program
         // policies driven by the "Resilience" section of appsettings.json.
         builder.Services.AddSlicedCoreResilience(builder.Configuration);
 
-        // Response Compression: enables Brotli and Gzip compression for all JSON, XML, and
+        // Response Compression: enables Brotli and Gzip compression for JSON, XML, and other
         // text-based responses. CompressionLevel.Fastest balances CPU usage with payload reduction.
-        // EnableForHttps is safe here because the application controls both endpoints and content,
-        // so BREACH-style attacks are not a concern for typical API payloads.
+        // EnableForHttps is enabled so HTTPS responses can be compressed; ensure compressible
+        // response bodies do not include secrets to avoid BREACH-style risks.
         builder.Services.AddResponseCompression(options =>
         {
             options.EnableForHttps = true;
