@@ -38,7 +38,7 @@ The "AI/hallucination safe" row means the architecture is structurally resistant
 - **OpenAPI** with API versioning and Scalar UI
 - **JWT Bearer authentication** and **CORS** configured from `appsettings.json`
 - **PII redaction** via `Microsoft.Extensions.Compliance.Redaction`
-- **Opinionated JSON serialization** — camelCase, null-omitting, case-insensitive, relaxed Unicode encoding via `System.Text.Json`
+- **Opinionated JSON serialization** — camelCase, null-omitting, case-insensitive via `System.Text.Json`
 - **ASP.NET Core Health Checks** with `/healthz`, `/healthz/live`, and `/healthz/ready` endpoints
 - **TUnit** integration tests with `WebApplicationFactory`
 
@@ -527,7 +527,6 @@ The template configures opinionated `System.Text.Json` defaults for all minimal-
 | `PropertyNamingPolicy` | `CamelCase` | Consistent camelCase property names in all JSON responses |
 | `DefaultIgnoreCondition` | `WhenWritingNull` | Reduces payload size by omitting properties with `null` values |
 | `PropertyNameCaseInsensitive` | `true` | Accepts JSON request bodies with any property casing |
-| `Encoder` | `UnsafeRelaxedJsonEscaping` | Avoids unnecessary Unicode escaping, producing cleaner and smaller output |
 
 These defaults are applied via `ConfigureHttpJsonOptions` and affect all minimal-API endpoints. To override a setting for a specific endpoint, pass a custom `JsonSerializerOptions` instance directly to the result serializer.
 
