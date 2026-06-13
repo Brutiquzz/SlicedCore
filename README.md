@@ -38,6 +38,7 @@ The "AI/hallucination safe" row means the architecture is structurally resistant
 - **OpenAPI** with API versioning and Scalar UI
 - **JWT Bearer authentication** and **CORS** configured from `appsettings.json`
 - **PII redaction** via `Microsoft.Extensions.Compliance.Redaction`
+- **Opinionated JSON serialization** — camelCase, null-omitting, case-insensitive via `System.Text.Json`
 - **ASP.NET Core Health Checks** with `/healthz`, `/healthz/live`, and `/healthz/ready` endpoints
 - **TUnit** integration tests with `WebApplicationFactory`
 
@@ -514,6 +515,20 @@ All runtime configuration lives in `appsettings.json`. Override per environment 
 | `Resilience` | `CircuitBreaker.MinimumThroughput` | Minimum requests before circuit can trip (default: `10`). |
 | `Resilience` | `CircuitBreaker.BreakDurationSeconds` | Duration in seconds the circuit stays open (default: `15`). |
 | `Resilience` | `Timeout.AttemptTimeoutSeconds` | Per-attempt timeout in seconds (default: `10`). |
+
+---
+
+### JSON Serialization
+
+The template configures opinionated `System.Text.Json` defaults for all minimal-API requests and responses in `Program.Services.cs`.
+
+| Setting | Value | Benefit |
+|---|---|---|
+| `PropertyNamingPolicy` | `CamelCase` | Consistent camelCase property names in all JSON responses |
+| `DefaultIgnoreCondition` | `WhenWritingNull` | Reduces payload size by omitting properties with `null` values |
+| `PropertyNameCaseInsensitive` | `true` | Accepts JSON request bodies with any property casing |
+
+These defaults are applied via `ConfigureHttpJsonOptions` and affect all minimal-API endpoints. To override a setting for a specific endpoint, return `Results.Json(value, options)` / `TypedResults.Json(value, options)` with a custom `JsonSerializerOptions` instance.
 
 ---
 
