@@ -17,13 +17,12 @@ public partial class Program
         // Global exception handler — catches any unhandled exception that escapes feature logic,
         // logs it via the built-in ILogger, and returns an RFC 9457 problem details response.
         // In Development the full exception detail is included; in other environments it is suppressed.
-        // Response compression — placed before any middleware that writes response bodies so that
-        // all downstream responses (JSON, text, etc.) are eligible for Brotli/Gzip compression.
-        app.UseResponseCompression();
-
         app.UseExceptionHandler();
         app.UseStatusCodePages();
 
+        // Response compression — placed before any middleware that writes response bodies so that
+        // all downstream responses (JSON, text, etc.) are eligible for Brotli/Gzip compression.
+        app.UseResponseCompression();
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
