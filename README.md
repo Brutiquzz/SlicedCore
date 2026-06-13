@@ -38,6 +38,7 @@ The "AI/hallucination safe" row means the architecture is structurally resistant
 - **OpenAPI** with API versioning and Scalar UI
 - **JWT Bearer authentication** and **CORS** configured from `appsettings.json`
 - **PII redaction** via `Microsoft.Extensions.Compliance.Redaction`
+- **ASP.NET Core Health Checks** with `/healthz`, `/healthz/live`, and `/healthz/ready` endpoints
 - **TUnit** integration tests with `WebApplicationFactory`
 
 ---
@@ -504,6 +505,56 @@ All runtime configuration lives in `appsettings.json`. Override per environment 
 | `Cors` | `AllowCredentials` | `true` / `false` |
 | `HmacRedactorOptions` | `Key` | Base-64 HMAC key used by PII redaction. Generate with `openssl rand -base64 32`. |
 | `HmacRedactorOptions` | `KeyId` | Numeric key identifier for key rotation. |
+
+---
+
+### Health Checks
+
+The template registers ASP.NET Core health check middleware and exposes three endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /healthz` | Overall status — aggregates every registered check |
+| `GET /healthz/live` | Liveness — always `200 OK` while the host is running; skips all dependency checks |
+| `GET /healthz/ready` | Readiness — only checks tagged `"ready"` must pass before traffic is routed |
+
+Dependency-specific checks are added in `Program.Services.cs` by chaining extension methods on the `IHealthChecksBuilder` returned by `AddHealthChecks()`.
+
+**SQL Server check** (requires [`AspNetCore.HealthChecks.SqlServer`](https://www.nuget.org/packages/AspNetCore.HealthChecks.SqlServer)):
+
+```csharp
+builder.Services.AddHealthChecks()
+    .AddSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        name: "sql",
+        tags: ["ready"]);
+```
+
+**EF Core DbContext check** (requires [`Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore`](https://www.nuget.org/packages/Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore)):
+
+```csharp
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>(name: "db", tags: ["ready"]);
+```
+
+Tag a check with `"ready"` to include it in the `/healthz/ready` probe. The `/healthz/live` probe always returns `200 OK` regardless of dependency checks — it is purely a host-is-alive signal used by Kubernetes liveness probes.
+
+**Kubernetes probe configuration example:**
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz/live
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /healthz/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+```
 
 **`appsettings.Development.json` example** (copy from `appsettings.Development.json.example`):
 

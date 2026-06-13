@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ProjectTemplate.Dependencies;
 using ProjectTemplate.Framework;
 using System.Reflection;
@@ -50,6 +52,28 @@ public partial class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Health check endpoints — no authentication required so that orchestrators can probe freely.
+        // /healthz       — overall status (all registered checks)
+        // /healthz/live  — liveness (host is running; no dependency checks)
+        // /healthz/ready — readiness (only checks tagged "ready" must pass before traffic is routed)
+        app.MapHealthChecks("/healthz");
+
+        app.MapHealthChecks("/healthz/live", new HealthCheckOptions
+        {
+            Predicate = _ => false
+        });
+
+        app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready"),
+            ResultStatusCodes =
+            {
+                [HealthStatus.Healthy] = StatusCodes.Status200OK,
+                [HealthStatus.Degraded] = StatusCodes.Status200OK,
+                [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+            }
+        });
 
         app.MapApiEndpoints(Assembly.GetExecutingAssembly());
     }

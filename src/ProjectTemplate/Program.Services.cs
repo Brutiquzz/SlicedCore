@@ -95,6 +95,13 @@ public partial class Program
 
         builder.Services.AddProblemDetails();
 
+        // Health Checks: registers the built-in health check infrastructure.
+        // Add dependency-specific checks by chaining extension methods, for example:
+        //   .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!, name: "sql", tags: ["ready"])
+        //   .AddDbContextCheck<AppDbContext>(name: "db", tags: ["ready"])   // requires AspNetCore.HealthChecks.EntityFramework
+        // See README.md § Health Checks for full usage guidance.
+        builder.Services.AddHealthChecks();
+
         // CORS: origins, methods, and headers are configured in appsettings.json under "Cors".
         // In development all origins are allowed for convenience.
         // In production restrict AllowedOrigins to known client URLs.
