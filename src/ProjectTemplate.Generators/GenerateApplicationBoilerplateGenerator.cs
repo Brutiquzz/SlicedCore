@@ -75,6 +75,13 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
         AppendRequestWrapper(builder, targetNamespace, featureName, coreNs);
         builder.AppendLine();
 
+        var persistenceRequestDtoInterface = coreType.GetTypeMembers("IPersistenceRequestDTO").FirstOrDefault();
+        if (persistenceRequestDtoInterface is not null)
+        {
+            AppendPersistenceRequestDto(builder, featureName, persistenceRequestDtoInterface);
+            builder.AppendLine();
+        }
+
         var applicationResponseInterface = coreType.GetTypeMembers("IApplicationResponseDTO").FirstOrDefault();
         if (applicationResponseInterface is not null)
         {
@@ -172,6 +179,33 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
         builder.AppendLine("        }");
         builder.AppendLine();
         builder.AppendLine("        public " + coreNs + ".IPersistenceRequestDTO Request { get; }");
+        builder.AppendLine("    }");
+    }
+
+    private static void AppendPersistenceRequestDto(StringBuilder builder, string featureName, INamedTypeSymbol dtoInterface)
+    {
+        builder.AppendLine("    private sealed record " + featureName + "PersistenceRequestDTO : " + GetTypeName(dtoInterface));
+        builder.AppendLine("    {");
+
+        foreach (var property in GetProperties(dtoInterface))
+        {
+            builder.Append("        public ");
+            builder.Append(GetTypeName(property.Type));
+            builder.Append(' ');
+            builder.Append(property.Name);
+            builder.Append(" { get; set; }");
+
+            var initializer = GetInitializer(property.Type);
+            if (initializer is not null)
+            {
+                builder.Append(" = ");
+                builder.Append(initializer);
+                builder.Append(';');
+            }
+
+            builder.AppendLine();
+        }
+
         builder.AppendLine("    }");
     }
 

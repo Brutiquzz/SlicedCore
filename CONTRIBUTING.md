@@ -78,9 +78,9 @@ The repository contains two item templates in `src\ProjectTemplate\Domains\.temp
 - **Parameters**:
   - `--name` / `-n` — feature name (e.g. `GetOrder`); replaces `CreateSample` in all file names and symbols
   - `--projectName` — root namespace / assembly name of the target project (defaults to `ProjectTemplate`)
-  - `--featureType` — `command` (default) or `query`; controls the generated CQRS event type, HTTP method, and infrastructure handler shape
+  - `--operation` — `GET`, `POST` (default), `PUT`, `PATCH`, or `DELETE`; determines the endpoint HTTP method, route pattern, status codes, and CQRS feature type (`GET` → query; all others → command)
   - `--include-endpoint` — `true` (default) or `false`; omit the `.Endpoint.cs` file when `false`
-- **Usage**: `dotnet new feature -n GetSample --featureType query [--include-endpoint false]`
+- **Usage**: `dotnet new feature -n GetSample --operation GET [--include-endpoint false]`
 
 ### **Domain template** (`domain`)
 - **Location**: `Domains/.template/domain/.template.config/template.json`
@@ -106,7 +106,7 @@ The repository contains two item templates in `src\ProjectTemplate\Domains\.temp
 
 3. **Instantiate a template**:
    ```bash
-   dotnet new feature -n TestGetSample
+   dotnet new feature -n TestGetSample --operation GET
    ```
 
 4. **Verify output** and ensure all placeholders (e.g., `CreateSample`) are replaced correctly.
@@ -141,7 +141,7 @@ If you modify:
 
 1. From within the domain folder (e.g., `src\ProjectTemplate\Domains\Order`), run:
    ```bash
-   dotnet new feature -n CreateOrder --projectName MyProject --featureType command
+   dotnet new feature -n CreateOrder --projectName MyProject --operation POST
    ```
 2. The item template emits three files: `CreateOrder.Contracts.cs`, `CreateOrder.cs`, and `CreateOrder.Endpoint.cs`
 3. Implement business logic in `ApplicationLayer` and persistence logic in `InfrastructureLayer` — the generators emit all layer handlers, DTOs, and boilerplate automatically

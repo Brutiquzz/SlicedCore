@@ -70,6 +70,12 @@ public partial class CreateSample
         }
     }
 
+    private sealed record CreateSampleRequestDTO : global::ProjectTemplate.Domains.Sample.CreateSample.Core.IApplicationRequestDTO
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Name2 { get; set; } = string.Empty;
+    }
+
     private sealed record CreateSampleRequest : global::ProjectTemplate.Domains.Sample.CreateSample.ICreateSampleRequest
     {
         public string Name { get; set; } = string.Empty;

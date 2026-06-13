@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `--operation` parameter (`GET` / `POST` / `PUT` / `PATCH` / `DELETE`) on the `feature` item
+  template — explicitly declares the intended HTTP operation for the feature. The selected
+  operation determines the endpoint HTTP method, route pattern, status codes, and CQRS feature
+  type (`GET` → query; all others → command). Defaults to `POST`.
+- `isGet`, `isPost`, `isPut`, `isPatch`, `isDelete` computed template symbols — used in
+  `CreateSample.Endpoint.cs` to emit the correct `MapGet` / `MapPost` / `MapPut` /
+  `MapPatch` / `MapDelete` call with the appropriate route pattern and response declarations.
 - `CHANGELOG.md` to track changes between releases.
 - `GenerateHttpFileGenerator` source generator that auto-maintains `ProjectTemplate.http`
   by scanning `*FeatureEndpoint` types and emitting a valid C# wrapper; an MSBuild inline
@@ -33,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   splitting handler-level and HTTP endpoint integration tests.
 
 ### Changed
+- **`--featureType` replaced by `--operation`** on the `feature` item template — the new
+  `--operation GET|POST|PUT|PATCH|DELETE` parameter supersedes the previous `command`/`query`
+  choice. The CQRS feature type is now derived automatically from the operation
+  (`GET` → query; `POST`/`PUT`/`PATCH`/`DELETE` → command). The `isCommand` and `isQuery`
+  template symbols are preserved for internal template conditions.
 - **Feature contract model refactored**: `ICreateSampleRequest` and `ICreateSampleResponse`
   (and their equivalents for all features) are now **public outer contracts** on the feature
   partial class, replacing the previous `ICreateSampleRequestDTO` / `ICreateSampleResponseDTO`

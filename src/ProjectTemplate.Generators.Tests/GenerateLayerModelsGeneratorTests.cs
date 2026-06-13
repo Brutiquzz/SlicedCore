@@ -53,23 +53,23 @@ public class GenerateLayerModelsGeneratorTests
     }
 
     [Test]
-    public async Task ApplicationModelsContainsPrivateBusinessInterface()
+    public async Task ApplicationModelsContainsInternalBusinessInterface()
     {
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
-        await Assert.That(source).Contains("private interface IOrder");
+        await Assert.That(source).Contains("internal interface IOrder");
     }
 
     [Test]
-    public async Task ApplicationModelsContainsConcreteBusinessModel()
+    public async Task ApplicationModelsContainsInternalConcreteBusinessModel()
     {
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
-        await Assert.That(source).Contains("private sealed class Order : IOrder");
+        await Assert.That(source).Contains("internal sealed class Order : IOrder");
     }
 
     [Test]
@@ -84,23 +84,23 @@ public class GenerateLayerModelsGeneratorTests
     }
 
     [Test]
-    public async Task InfrastructureModelsContainsPrivatePersistenceInterface()
+    public async Task InfrastructureModelsContainsInternalPersistenceInterface()
     {
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.InfrastructureLayerModels.g.cs"];
-        await Assert.That(source).Contains("private interface IOrderEntity");
+        await Assert.That(source).Contains("internal interface IOrderEntity");
     }
 
     [Test]
-    public async Task InfrastructureModelsContainsConcretePersistenceRecord()
+    public async Task InfrastructureModelsContainsInternalConcretePersistenceRecord()
     {
         var sources = GeneratorTestHelper.GetSources(
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.InfrastructureLayerModels.g.cs"];
-        await Assert.That(source).Contains("private sealed record OrderEntity : IOrderEntity");
+        await Assert.That(source).Contains("internal sealed record OrderEntity : IOrderEntity");
     }
 
     [Test]

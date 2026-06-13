@@ -9,6 +9,7 @@ public class SampleDomain
     [BusinessModel]
     private interface ISample
     {
+        int Id { get; set; }
         string Name { get; set; }
         string Name2 { get; set; }
     }

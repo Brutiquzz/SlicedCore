@@ -27,29 +27,60 @@
         "source": "name",
         "steps": [
           {
-            "regex": "^(?:Create|Get|Update|Delete|List)(.+)$",
+            "regex": "^(?:Create|Get|Update|Delete|List|Patch)(.+)$",
             "replacement": "$1"
           }
         ]
       },
       "replaces": "Sample",
-      "description": "Domain name derived from feature name by stripping the 'Create' prefix"
+      "description": "Domain name derived from feature name by stripping the verb prefix"
     },
-    "featureType": {
+    "operation": {
       "type": "parameter",
       "datatype": "choice",
-      "defaultValue": "command",
-      "description": "Whether this feature is a command (write, POST) or a query (read-only, GET).",
+      "defaultValue": "POST",
+      "description": "The HTTP operation this feature represents. Determines the endpoint HTTP method, route pattern, and generated infrastructure shape.",
       "choices": [
         {
-          "choice": "command",
-          "description": "A state-changing feature. Generates a POST endpoint, write infrastructure (Add + SaveChangesAsync), and command-style Result.Created responses."
+          "choice": "GET",
+          "description": "Read-only retrieval. Generates a GET endpoint with a route-parameter request, Result.Ok / Result.NotFound responses, and read infrastructure (FirstOrDefaultAsync)."
         },
         {
-          "choice": "query",
-          "description": "A read-only feature. Generates a GET endpoint, read infrastructure (FirstOrDefaultAsync), and Result.Ok / Result.NotFound responses. The Application layer may call this via IApplicationMediator.QueryXxx(...)."
+          "choice": "POST",
+          "description": "Resource creation. Generates a POST endpoint with a JSON body request, Result.Created response, and write infrastructure (Add + SaveChangesAsync)."
+        },
+        {
+          "choice": "PUT",
+          "description": "Full resource replacement. Generates a PUT endpoint with a route parameter and JSON body request, Result.Ok / Result.NotFound responses, and update infrastructure."
+        },
+        {
+          "choice": "PATCH",
+          "description": "Partial resource update. Generates a PATCH endpoint with a route parameter and JSON body request, Result.Ok / Result.NotFound responses, and update infrastructure."
+        },
+        {
+          "choice": "DELETE",
+          "description": "Resource deletion. Generates a DELETE endpoint with a route-parameter request, Result.Ok / Result.NotFound responses, and delete infrastructure."
         }
       ]
+    },
+    "featureType": {
+      "type": "generated",
+      "generator": "regex",
+      "datatype": "string",
+      "parameters": {
+        "source": "operation",
+        "steps": [
+          {
+            "regex": "^GET$",
+            "replacement": "query"
+          },
+          {
+            "regex": "^(POST|PUT|PATCH|DELETE)$",
+            "replacement": "command"
+          }
+        ]
+      },
+      "description": "Derived CQRS feature type: 'query' for GET, 'command' for all other operations."
     },
     "isCommand": {
       "type": "computed",
@@ -58,6 +89,38 @@
     "isQuery": {
       "type": "computed",
       "value": "(featureType == \"query\")"
+    },
+    "isGet": {
+      "type": "computed",
+      "value": "(operation == \"GET\")"
+    },
+    "isPost": {
+      "type": "computed",
+      "value": "(operation == \"POST\")"
+    },
+    "isPut": {
+      "type": "computed",
+      "value": "(operation == \"PUT\")"
+    },
+    "isPatch": {
+      "type": "computed",
+      "value": "(operation == \"PATCH\")"
+    },
+    "isDelete": {
+      "type": "computed",
+      "value": "(operation == \"DELETE\")"
+    },
+    "isIdOnly": {
+      "type": "computed",
+      "value": "(operation == \"GET\" || operation == \"DELETE\")"
+    },
+    "isBodyWithId": {
+      "type": "computed",
+      "value": "(operation == \"PUT\" || operation == \"PATCH\")"
+    },
+    "isBodyOnly": {
+      "type": "computed",
+      "value": "(operation == \"POST\")"
     },
     "include-endpoint": {
       "type": "parameter",

@@ -18,7 +18,7 @@
 	  6. Clean up the temporary output directory
 
 .NOTES
-	Requires: .NET 9 SDK, pwsh (PowerShell 7+)
+	Requires: .NET 10 SDK, pwsh (PowerShell 7+)
 #>
 
 [CmdletBinding()]
@@ -89,8 +89,8 @@ try {
 		dotnet new domain -n Order -o $OrderDir --projectName $ProjectName
 	}
 
-	Invoke-Checked "dotnet new feature -n CreateOrder (with endpoint)" {
-		dotnet new feature -n CreateOrder -o $OrderDir --projectName $ProjectName
+	Invoke-Checked "dotnet new feature -n CreateOrder (with endpoint, POST)" {
+		dotnet new feature -n CreateOrder -o $OrderDir --projectName $ProjectName --operation POST
 	}
 
 	# Scaffold a second domain to test --include-endpoint false independently
@@ -101,8 +101,36 @@ try {
 		dotnet new domain -n Product -o $ProductDir --projectName $ProjectName
 	}
 
-	Invoke-Checked "dotnet new feature -n CreateProduct (without endpoint)" {
-		dotnet new feature -n CreateProduct -o $ProductDir --projectName $ProjectName --include-endpoint false
+	Invoke-Checked "dotnet new feature -n CreateProduct (without endpoint, POST)" {
+		dotnet new feature -n CreateProduct -o $ProductDir --projectName $ProjectName --operation POST --include-endpoint false
+	}
+
+	# Scaffold a third domain to test additional HTTP operations
+	$UserDir = Join-Path $OutputDir "src\$ProjectName\Domains\User"
+	New-Item -ItemType Directory -Path $UserDir | Out-Null
+
+	Invoke-Checked "dotnet new domain -n User" {
+		dotnet new domain -n User -o $UserDir --projectName $ProjectName
+	}
+
+	Invoke-Checked "dotnet new feature -n CreateUser (with endpoint, POST)" {
+		dotnet new feature -n CreateUser -o $UserDir --projectName $ProjectName --operation POST
+	}
+
+	Invoke-Checked "dotnet new feature -n GetUser (GET)" {
+		dotnet new feature -n GetUser -o $UserDir --projectName $ProjectName --operation GET
+	}
+
+	Invoke-Checked "dotnet new feature -n UpdateUser (PUT)" {
+		dotnet new feature -n UpdateUser -o $UserDir --projectName $ProjectName --operation PUT
+	}
+
+	Invoke-Checked "dotnet new feature -n PatchUser (PATCH)" {
+		dotnet new feature -n PatchUser -o $UserDir --projectName $ProjectName --operation PATCH
+	}
+
+	Invoke-Checked "dotnet new feature -n DeleteUser (DELETE)" {
+		dotnet new feature -n DeleteUser -o $UserDir --projectName $ProjectName --operation DELETE
 	}
 
 	# ── 5. Build again after item template additions ───────────────────────────

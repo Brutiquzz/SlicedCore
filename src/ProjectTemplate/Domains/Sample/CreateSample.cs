@@ -17,7 +17,7 @@ public partial class CreateSample
             // Implement presentation logic
             // ...
             
-            var appDTOResponse = await ForwardToApplicationLayer(request.Adapt<Core.IApplicationRequestDTO>(), cancellationToken);
+            var appDTOResponse = await ForwardToApplicationLayer(request.Adapt<CreateSampleRequestDTO>(), cancellationToken);
 
             if (appDTOResponse.IsError())
             {
@@ -54,7 +54,7 @@ public partial class CreateSample
             // Implement business logic
             // ...
             
-            var persistenceDTOResponse = await ForwardToInfrastructureLayer(sample.Adapt<Core.IPersistenceRequestDTO>(), cancellationToken);
+            var persistenceDTOResponse = await ForwardToInfrastructureLayer(sample.Adapt<CreateSamplePersistenceRequestDTO>(), cancellationToken);
             
             if (persistenceDTOResponse.IsError())
             {
