@@ -8,7 +8,7 @@ public partial class CreateSample
         {
             public void MapEndpoint(IEndpointRouteBuilder builder)
             {
-                builder.MapPost("/sample", async (ICreateSampleRequest request, IMediator mediator, CancellationToken cancellationToken) =>
+                builder.MapPost("/sample", async (CreateSampleRequest request, IMediator mediator, CancellationToken cancellationToken) =>
                 {
                     return (await mediator.CreateSample(request, cancellationToken)).ToMinimalApiResult();
                 })
