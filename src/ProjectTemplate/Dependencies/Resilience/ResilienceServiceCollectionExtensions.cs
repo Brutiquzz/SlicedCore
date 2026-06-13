@@ -51,8 +51,8 @@ public static class ResilienceServiceCollectionExtensions
                         UseJitter = options.Retry.UseJitter,
                         ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                             .Handle<HttpRequestException>()
-                            .HandleResult(response => !response.IsSuccessStatusCode)
-                    })
+                            .HandleResult(response =>
+                                (int)response.StatusCode is 408 or 429 || (int)response.StatusCode >= 500)
                     .AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
                     {
                         FailureRatio = options.CircuitBreaker.FailureRatio,
