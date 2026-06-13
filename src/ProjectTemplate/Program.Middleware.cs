@@ -20,6 +20,9 @@ public partial class Program
         app.UseExceptionHandler();
         app.UseStatusCodePages();
 
+        // Response compression — placed before any middleware that writes response bodies so that
+        // all downstream responses (JSON, text, etc.) are eligible for Brotli/Gzip compression.
+        app.UseResponseCompression();
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
