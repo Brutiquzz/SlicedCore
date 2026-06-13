@@ -528,7 +528,7 @@ The template configures opinionated `System.Text.Json` defaults for all minimal-
 | `DefaultIgnoreCondition` | `WhenWritingNull` | Reduces payload size by omitting properties with `null` values |
 | `PropertyNameCaseInsensitive` | `true` | Accepts JSON request bodies with any property casing |
 
-These defaults are applied via `ConfigureHttpJsonOptions` and affect all minimal-API endpoints. To override a setting for a specific endpoint, pass a custom `JsonSerializerOptions` instance directly to the result serializer.
+These defaults are applied via `ConfigureHttpJsonOptions` and affect all minimal-API endpoints. To override a setting for a specific endpoint, return `Results.Json(value, options)` / `TypedResults.Json(value, options)` with a custom `JsonSerializerOptions` instance.
 
 ---
 
