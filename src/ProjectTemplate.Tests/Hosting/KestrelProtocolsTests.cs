@@ -16,18 +16,18 @@ public sealed class KestrelProtocolsTests
         var app = builder.Build();
         var options = app.Services.GetRequiredService<IOptions<KestrelServerOptions>>().Value;
 
-        var codeBackedListenOptionsField = typeof(KestrelServerOptions).GetField(
-            "<CodeBackedListenOptions>k__BackingField",
+        var codeBackedListenOptionsProperty = typeof(KestrelServerOptions).GetProperty(
+            "CodeBackedListenOptions",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 
-        await Assert.That(codeBackedListenOptionsField).IsNotNull();
+        await Assert.That(codeBackedListenOptionsProperty).IsNotNull();
 
-        if (codeBackedListenOptionsField is null)
+        if (codeBackedListenOptionsProperty is null)
         {
-            throw new InvalidOperationException("Expected Kestrel code-backed listen options field to exist.");
+            throw new InvalidOperationException("Expected Kestrel code-backed listen options property to exist.");
         }
 
-        var listenOptions = (IReadOnlyList<ListenOptions>?)codeBackedListenOptionsField.GetValue(options);
+        var listenOptions = (IReadOnlyList<ListenOptions>?)codeBackedListenOptionsProperty.GetValue(options);
 
         await Assert.That(listenOptions).IsNotNull();
 
