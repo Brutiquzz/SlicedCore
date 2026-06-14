@@ -11,6 +11,7 @@ public partial class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        ConfigureHosting(builder);
         ConfigureServices(builder);
         var app = builder.Build();
         ConfigureMiddleware(app);

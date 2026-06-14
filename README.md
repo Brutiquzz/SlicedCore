@@ -516,6 +516,13 @@ All runtime configuration lives in `appsettings.json`. Override per environment 
 | `Resilience` | `CircuitBreaker.BreakDurationSeconds` | Duration in seconds the circuit stays open (default: `15`). |
 | `Resilience` | `Timeout.AttemptTimeoutSeconds` | Per-attempt timeout in seconds (default: `10`). |
 
+By default, the template configures Kestrel to listen on HTTPS port `5001` with:
+
+- `Http1AndHttp2AndHttp3` protocol negotiation enabled
+- Automatic fallback to HTTP/2 or HTTP/1.1 when HTTP/3 is unavailable
+
+This configuration is applied in `Program.Services.cs` via `ConfigureHosting`.
+
 ---
 
 ### JSON Serialization
@@ -631,4 +638,3 @@ Built with:
 ## License
 
 [MIT](LICENSE)
-
