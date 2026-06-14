@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Compliance.Redaction;
 using ProjectTemplate.Dependencies;
 using ProjectTemplate.Dependencies.OpenApi;
@@ -16,6 +17,17 @@ namespace ProjectTemplate;
 
 public partial class Program
 {
+    internal static void ConfigureHosting(WebApplicationBuilder builder)
+    {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ConfigureEndpointDefaults(listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+            });
+        });
+    }
+
     /// <summary>
     /// Registers all application services with the DI container.
     /// Called once at startup before the application pipeline is built.
