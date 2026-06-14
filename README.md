@@ -516,7 +516,13 @@ All runtime configuration lives in `appsettings.json`. Override per environment 
 | `Resilience` | `CircuitBreaker.BreakDurationSeconds` | Duration in seconds the circuit stays open (default: `15`). |
 | `Resilience` | `Timeout.AttemptTimeoutSeconds` | Per-attempt timeout in seconds (default: `10`). |
 
-By default, the template keeps endpoint/port selection in environment/template configuration (for example, `launchSettings.json`) and configures HTTPS endpoints with:
+By default, the template keeps endpoint/port selection in environment/template configuration:
+
+- Local run profiles are defined in `src/ProjectTemplate/Properties/launchSettings.json` (for example, `https://localhost:7199;http://localhost:5242`).
+- The generated `ProjectTemplate.http` file starts with `@ProjectTemplate_HostAddress = http://localhost:5000` and can be adjusted per environment.
+- Kestrel hosting code does **not** hard-code ports/listeners.
+
+For HTTPS endpoints, `ConfigureHosting` configures:
 
 - `Http1AndHttp2AndHttp3` protocol negotiation enabled
 - Automatic fallback to HTTP/2 or HTTP/1.1 when HTTP/3 is unavailable
