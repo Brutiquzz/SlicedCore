@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 
@@ -7,11 +8,15 @@ namespace ProjectTemplate.Tests.Hosting;
 public sealed class KestrelProtocolsTests
 {
     [Test]
-    public async Task ConfigureHosting_EnablesHttpsWithHttp1Http2AndHttp3OnPort5001()
+    public async Task ConfigureHosting_EnablesHttpsWithHttp1Http2AndHttp3ForConfiguredHttpsEndpoints()
     {
         var builder = WebApplication.CreateBuilder();
 
         ProjectTemplate.Program.ConfigureHosting(builder);
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(0, listenOptions => listenOptions.UseHttps());
+        });
 
         var app = builder.Build();
         var options = app.Services.GetRequiredService<IOptions<KestrelServerOptions>>().Value;
@@ -38,7 +43,6 @@ public sealed class KestrelProtocolsTests
 
         var endpoint = listenOptions.Single();
 
-        await Assert.That(endpoint.IPEndPoint?.Port).IsEqualTo(5001);
         await Assert.That(endpoint.Protocols).IsEqualTo(HttpProtocols.Http1AndHttp2AndHttp3);
 
         await app.DisposeAsync();

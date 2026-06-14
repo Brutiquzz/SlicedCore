@@ -21,9 +21,8 @@ public partial class Program
     {
         builder.WebHost.ConfigureKestrel(options =>
         {
-            options.ListenAnyIP(5001, listenOptions =>
+            options.ConfigureEndpointDefaults(listenOptions =>
             {
-                listenOptions.UseHttps();
                 listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
             });
         });
