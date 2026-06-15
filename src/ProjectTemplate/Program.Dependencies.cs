@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProjectTemplate.Data;
 using ProjectTemplate.Dependencies;
+using ProjectTemplate.Dependencies.Cache;
 
 namespace ProjectTemplate;
 
@@ -29,6 +30,10 @@ public partial class Program
     {
         // Add Infrastructure Layered dependencies
         // ...
+
+        // IAppCache: exposes the hybrid cache (read-through / write-through) to all infrastructure
+        // handlers. Registered as a singleton because HybridCache itself is a singleton.
+        builder.AddSingleton<IAppCache, AppCache>();
 
         builder.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
