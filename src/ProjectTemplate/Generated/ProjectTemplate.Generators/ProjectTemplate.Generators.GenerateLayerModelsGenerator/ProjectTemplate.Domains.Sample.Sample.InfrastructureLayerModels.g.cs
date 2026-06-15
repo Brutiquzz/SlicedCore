@@ -5,42 +5,42 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ProjectTemplate.Domains.Sample;
 
-internal interface ISampleEntity
-{
-    int Id { get; set; }
-    string Name { get; set; }
-    string Name2 { get; set; }
-    global::System.DateTime CreatedAt { get; set; }
-    SampleEntityDetail Detail { get; set; }
-}
-
-internal sealed record SampleEntity : ISampleEntity
-{
-    public int Id { get; set; } = default;
-    public string Name { get; set; } = string.Empty;
-    public string Name2 { get; set; } = string.Empty;
-    public global::System.DateTime CreatedAt { get; set; } = default;
-    public SampleEntityDetail Detail { get; set; } = null!;
-}
-
-internal interface ISampleEntityDetail
-{
-    int Id { get; set; }
-    int SampleEntityId { get; set; }
-    string Detail { get; set; }
-}
-
-internal sealed record SampleEntityDetail : ISampleEntityDetail
-{
-    public int Id { get; set; } = default;
-    public int SampleEntityId { get; set; } = default;
-    public string Detail { get; set; } = string.Empty;
-}
-
 public partial class CreateSample
 {
     partial class InfrastructureLayer
     {
+        internal interface ISampleEntity
+        {
+            int Id { get; set; }
+            string Name { get; set; }
+            string Name2 { get; set; }
+            global::System.DateTime CreatedAt { get; set; }
+            SampleEntityDetail Detail { get; set; }
+        }
+
+        internal sealed record SampleEntity : ISampleEntity
+        {
+            public int Id { get; set; } = default;
+            public string Name { get; set; } = string.Empty;
+            public string Name2 { get; set; } = string.Empty;
+            public global::System.DateTime CreatedAt { get; set; } = default;
+            public SampleEntityDetail Detail { get; set; } = null!;
+        }
+
+        internal interface ISampleEntityDetail
+        {
+            int Id { get; set; }
+            int SampleEntityId { get; set; }
+            string Detail { get; set; }
+        }
+
+        internal sealed record SampleEntityDetail : ISampleEntityDetail
+        {
+            public int Id { get; set; } = default;
+            public int SampleEntityId { get; set; } = default;
+            public string Detail { get; set; } = string.Empty;
+        }
+
         internal static void RegisterEntities(ModelBuilder modelBuilder)
         {
             {
@@ -67,3 +67,67 @@ public partial class CreateSample
         }
     }
 }
+
+public partial class GetSample
+{
+    partial class InfrastructureLayer
+    {
+        internal interface ISampleEntity
+        {
+            int Id { get; set; }
+            string Name { get; set; }
+            string Name2 { get; set; }
+            global::System.DateTime CreatedAt { get; set; }
+            SampleEntityDetail Detail { get; set; }
+        }
+
+        internal sealed record SampleEntity : ISampleEntity
+        {
+            public int Id { get; set; } = default;
+            public string Name { get; set; } = string.Empty;
+            public string Name2 { get; set; } = string.Empty;
+            public global::System.DateTime CreatedAt { get; set; } = default;
+            public SampleEntityDetail Detail { get; set; } = null!;
+        }
+
+        internal interface ISampleEntityDetail
+        {
+            int Id { get; set; }
+            int SampleEntityId { get; set; }
+            string Detail { get; set; }
+        }
+
+        internal sealed record SampleEntityDetail : ISampleEntityDetail
+        {
+            public int Id { get; set; } = default;
+            public int SampleEntityId { get; set; } = default;
+            public string Detail { get; set; } = string.Empty;
+        }
+
+        internal static void RegisterEntities(ModelBuilder modelBuilder)
+        {
+            {
+            var entity = modelBuilder.Entity<SampleEntity>();
+            entity.ToTable("Samples");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.Name2).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.CreatedAt).IsRequired().ValueGeneratedOnAdd();
+            entity.HasOne(e => e.Detail)
+            .WithOne()
+            .HasForeignKey<SampleEntityDetail>(d => d.SampleEntityId)
+            .OnDelete(DeleteBehavior.Cascade);
+            }
+            {
+            var entity = modelBuilder.Entity<SampleEntityDetail>();
+            entity.ToTable("SampleDetails");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.SampleEntityId).IsRequired();
+            entity.Property(e => e.Detail).IsRequired().HasMaxLength(1024);
+            }
+        }
+    }
+}
+

@@ -17,7 +17,7 @@ public partial class CreateSample
 
             // Implement presentation logic
             // ...
-            
+
             var appDTOResponse = await ForwardToApplicationLayer(request.Adapt<CreateSampleRequestDTO>(), cancellationToken);
 
             if (appDTOResponse.IsError())

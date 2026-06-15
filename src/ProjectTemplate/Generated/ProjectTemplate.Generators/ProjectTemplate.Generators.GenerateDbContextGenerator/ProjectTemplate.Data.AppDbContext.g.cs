@@ -8,5 +8,6 @@ internal partial class AppDbContext
     partial void ApplyGeneratedConfigurations(global::Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
     {
         global::ProjectTemplate.Domains.Sample.CreateSample.InfrastructureLayer.RegisterEntities(modelBuilder);
+        global::ProjectTemplate.Domains.Sample.GetSample.InfrastructureLayer.RegisterEntities(modelBuilder);
     }
 }
