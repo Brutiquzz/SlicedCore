@@ -32,7 +32,7 @@ public sealed class RedisOptions
 {
     /// <summary>
     /// StackExchange.Redis connection string, for example
-    /// <c>localhost:6379</c> or <c>my-redis.cache.windows.net:6380,ssl=true,******
+    /// <c>localhost:6379</c> or <c>my-redis.cache.windows.net:6380,ssl=true,******</c>.
     /// Leave empty or omit to fall back to in-memory caching.
     /// </summary>
     public string? ConnectionString { get; set; }

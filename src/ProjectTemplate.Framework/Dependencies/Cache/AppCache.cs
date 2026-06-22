@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
-using ProjectTemplate.Dependencies.Cache;
 
-namespace ProjectTemplate.Dependencies;
+namespace ProjectTemplate.Dependencies.Cache;
 
 /// <summary>
 /// Hybrid-cache implementation of <see cref="IAppCache"/>.
@@ -11,7 +10,7 @@ namespace ProjectTemplate.Dependencies;
 /// (Redis when configured, otherwise a distributed-memory fallback) for consistency
 /// across multiple application instances.
 /// </summary>
-internal sealed class AppCache : IAppCache
+public sealed class AppCache : IAppCache
 {
     private readonly HybridCache _hybridCache;
     private readonly TimeSpan _defaultTtl;
