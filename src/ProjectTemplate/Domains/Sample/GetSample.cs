@@ -1,5 +1,6 @@
 using ProjectTemplate.Data;
 using ProjectTemplate.Dependencies.Attributes;
+using ProjectTemplate.Dependencies.Cache;
 
 namespace ProjectTemplate.Domains.Sample;
 
@@ -69,19 +70,31 @@ public partial class GetSample
     {
         private async Task<Result<Core.IPersistenceResponseDTO>> InfrastructureLogic(SampleEntity entity, CancellationToken cancellationToken)
         {
-            // Implement any further Infrastructure Code for the GetSampleFeature here
-            // Use GetRequiredService or GetService to access accessible dependencies from this layer
-            // ...
+            // Read-through caching: check the cache first; on a miss, fetch from the database,
+            // store the result, and return it. Subsequent reads for the same id are served
+            // directly from the cache without hitting the database.
+            var cache = GetRequiredService<IAppCache>();
 
-            var dbContext = GetRequiredDbContext<AppDbContext>();
+            var cached = await cache.GetOrCreateAsync(
+                CachePayload.KeyFor<SampleEntity>(entity.Id),
+                async ct =>
+                {
+                    var dbContext = GetRequiredDbContext<AppDbContext>();
+                    var found = await dbContext.Set<SampleEntity>()
+                        .FindAsync(new object[] { entity.Id }, ct);
+                    return found is null ? null : CachePayload.Create<SampleEntity>(found.Id, found);
+                },
+                cancellationToken: cancellationToken);
 
-            var found = await dbContext.Set<SampleEntity>()
-                .FindAsync(new object[] { entity.Id }, cancellationToken);
-
-            if (found is null)
+            if (cached is null)
                 return Result.NotFound();
 
-            return Result.Success((Core.IPersistenceResponseDTO)found.Adapt<PersistenceResponseDTO>());
+            var result = cached.Get<SampleEntity>();
+
+            if (result is null)
+                return Result.NotFound();
+
+            return Result.Success((Core.IPersistenceResponseDTO)result.Adapt<PersistenceResponseDTO>());
         }
     }
 }

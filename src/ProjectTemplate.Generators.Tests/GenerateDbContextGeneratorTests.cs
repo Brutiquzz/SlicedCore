@@ -119,4 +119,37 @@ public class GenerateDbContextGeneratorTests
         // Each domain must contribute its own RegisterEntities call.
         await Assert.That(combined.Split("RegisterEntities").Length - 1).IsGreaterThanOrEqualTo(2);
     }
+
+    [Test]
+    public async Task CallsRegisterEntitiesForEveryFeatureInDomain()
+    {
+        const string source = """
+            using ProjectTemplate.Dependencies.Attributes;
+
+            namespace MyApp.Domains.Order;
+
+            [Domain]
+            public class OrderDomain
+            {
+                [PersistenceModel]
+                private interface IOrderEntity
+                {
+                    int Id { get; set; }
+                }
+            }
+
+            [Feature(FeatureType.Command)]
+            public partial class CreateOrder { }
+
+            [Feature(FeatureType.Query)]
+            public partial class GetOrder { }
+            """;
+
+        var result = GeneratorTestHelper.Run<GenerateDbContextGenerator>(source);
+        var sources = GeneratorTestHelper.GetSources(result);
+        var combined = string.Concat(sources.Values);
+
+        await Assert.That(combined).Contains("CreateOrder.InfrastructureLayer.RegisterEntities");
+        await Assert.That(combined).Contains("GetOrder.InfrastructureLayer.RegisterEntities");
+    }
 }

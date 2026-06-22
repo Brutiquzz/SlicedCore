@@ -110,41 +110,73 @@ public sealed class GenerateLayerModelsGenerator : IIncrementalGenerator
             })
             .Where(static m => m.Symbol is not null);
 
-        context.RegisterSourceOutput(domainClasses, static (productionContext, domainModel) =>
+        var featureClasses = context.SyntaxProvider.ForAttributeWithMetadataName(
+            fullyQualifiedMetadataName: "ProjectTemplate.Dependencies.Attributes.FeatureAttribute",
+            predicate: static (node, _) => node is ClassDeclarationSyntax,
+            transform: static (syntaxContext, cancellationToken) =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return (INamedTypeSymbol)syntaxContext.TargetSymbol;
+            })
+            .Where(static s => s is not null);
+
+        var combined = domainClasses.Collect().Combine(featureClasses.Collect());
+
+        context.RegisterSourceOutput(combined, static (productionContext, source) =>
         {
-            var domainSymbol = domainModel.Symbol;
-            var targetNamespace = domainSymbol.ContainingNamespace.IsGlobalNamespace
-                ? string.Empty
-                : domainSymbol.ContainingNamespace.ToDisplayString();
+            var (domains, features) = source;
 
-            if (string.IsNullOrWhiteSpace(targetNamespace)) return;
-
-            var rawName = domainSymbol.Name;
-            var domainName = rawName.EndsWith("Domain", StringComparison.Ordinal)
-                ? rawName.Substring(0, rawName.Length - "Domain".Length)
-                : rawName;
-            var featureName = $"Create{domainName}";
-
-            if (domainModel.BusinessInterface is not null)
+            foreach (var domainModel in domains)
             {
-                var source = BuildApplicationLayerModels(targetNamespace, featureName, domainModel.BusinessInterface);
-                productionContext.AddSource(
-                    $"{targetNamespace}.{domainName}.ApplicationLayerModels.g.cs",
-                    SourceText.From(source, Encoding.UTF8));
-            }
+                var domainSymbol = domainModel.Symbol;
+                var targetNamespace = domainSymbol.ContainingNamespace.IsGlobalNamespace
+                    ? string.Empty
+                    : domainSymbol.ContainingNamespace.ToDisplayString();
 
-            if (domainModel.PersistenceEntries.Count > 0)
-            {
-                var source = BuildInfrastructureLayerModels(targetNamespace, featureName, domainModel.PersistenceEntries);
-                productionContext.AddSource(
-                    $"{targetNamespace}.{domainName}.InfrastructureLayerModels.g.cs",
-                    SourceText.From(source, Encoding.UTF8));
+                if (string.IsNullOrWhiteSpace(targetNamespace)) continue;
+
+                var rawName = domainSymbol.Name;
+                var domainName = rawName.EndsWith("Domain", StringComparison.Ordinal)
+                    ? rawName.Substring(0, rawName.Length - "Domain".Length)
+                    : rawName;
+                var defaultFeatureName = $"Create{domainName}";
+
+                // Collect all [Feature] classes in the same namespace as this domain.
+                var matchedFeatureNames = new List<string>();
+                foreach (var feature in features.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>())
+                {
+                    if (feature.ContainingNamespace.IsGlobalNamespace) continue;
+                    if (feature.ContainingNamespace.ToDisplayString() == targetNamespace)
+                        matchedFeatureNames.Add(feature.Name);
+                }
+
+                // Fall back to Create{DomainName} when no [Feature] classes are in the
+                // compilation (e.g. isolated unit tests that only supply a [Domain] source).
+                var featureNames = matchedFeatureNames.Count > 0
+                    ? (IReadOnlyList<string>)matchedFeatureNames
+                    : new[] { defaultFeatureName };
+
+                if (domainModel.BusinessInterface is not null)
+                {
+                    var appSource = BuildApplicationLayerModels(targetNamespace, featureNames, domainModel.BusinessInterface);
+                    productionContext.AddSource(
+                        $"{targetNamespace}.{domainName}.ApplicationLayerModels.g.cs",
+                        SourceText.From(appSource, Encoding.UTF8));
+                }
+
+                if (domainModel.PersistenceEntries.Count > 0)
+                {
+                    var infraSource = BuildInfrastructureLayerModels(targetNamespace, featureNames, domainModel.PersistenceEntries);
+                    productionContext.AddSource(
+                        $"{targetNamespace}.{domainName}.InfrastructureLayerModels.g.cs",
+                        SourceText.From(infraSource, Encoding.UTF8));
+                }
             }
         });
     }
 
     private static string BuildApplicationLayerModels(
-        string targetNamespace, string featureName, INamedTypeSymbol businessInterface)
+        string targetNamespace, IReadOnlyList<string> featureNames, INamedTypeSymbol businessInterface)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated/>");
@@ -153,32 +185,43 @@ public sealed class GenerateLayerModelsGenerator : IIncrementalGenerator
         sb.AppendLine($"namespace {targetNamespace};");
         sb.AppendLine();
 
-        // Emit as internal namespace-level types so every feature in this domain can access them.
         var modelName = StripLeadingI(businessInterface.Name);
 
-        sb.AppendLine($"internal interface {businessInterface.Name}");
-        sb.AppendLine("{");
-        foreach (var prop in GetProperties(businessInterface))
-            sb.AppendLine($"    {prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {prop.Name} {{ get; set; }}");
-        sb.AppendLine("}");
-        sb.AppendLine();
-
-        sb.AppendLine($"internal sealed class {modelName} : {businessInterface.Name}");
-        sb.AppendLine("{");
-        foreach (var prop in GetProperties(businessInterface))
+        foreach (var featureName in featureNames)
         {
-            var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            var defaultVal = GetDefault(prop.Type);
-            sb.Append($"    public {typeName} {prop.Name} {{ get; set; }}");
-            sb.AppendLine(defaultVal is not null ? $" = {defaultVal};" : string.Empty);
+            sb.AppendLine($"public partial class {featureName}");
+            sb.AppendLine("{");
+            sb.AppendLine("    partial class ApplicationLayer");
+            sb.AppendLine("    {");
+
+            sb.AppendLine($"        private interface {businessInterface.Name}");
+            sb.AppendLine("        {");
+            foreach (var prop in GetProperties(businessInterface))
+                sb.AppendLine($"            {prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {prop.Name} {{ get; set; }}");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+
+            sb.AppendLine($"        private sealed class {modelName} : {businessInterface.Name}");
+            sb.AppendLine("        {");
+            foreach (var prop in GetProperties(businessInterface))
+            {
+                var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                var defaultVal = GetDefault(prop.Type);
+                sb.Append($"            public {typeName} {prop.Name} {{ get; set; }}");
+                sb.AppendLine(defaultVal is not null ? $" = {defaultVal};" : string.Empty);
+            }
+            sb.AppendLine("        }");
+
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+            sb.AppendLine();
         }
-        sb.AppendLine("}");
 
         return sb.ToString();
     }
 
     private static string BuildInfrastructureLayerModels(
-        string targetNamespace, string featureName, IReadOnlyList<PersistenceEntry> entries)
+        string targetNamespace, IReadOnlyList<string> featureNames, IReadOnlyList<PersistenceEntry> entries)
     {
         var ifaceToLocal = entries.ToDictionary(
             e => e.Interface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -194,69 +237,72 @@ public sealed class GenerateLayerModelsGenerator : IIncrementalGenerator
         sb.AppendLine($"namespace {targetNamespace};");
         sb.AppendLine();
 
-        // Emit entity interface + record as internal namespace-level types so every feature
-        // in this domain (e.g. GetSample alongside CreateSample) can access them.
-        foreach (var entry in entries)
+        // Each feature in the domain gets its own private copy of the entity types and a
+        // RegisterEntities method, all nested inside its InfrastructureLayer partial class.
+        foreach (var featureName in featureNames)
         {
-            var entityName = StripLeadingI(entry.Interface.Name);
-
-            sb.AppendLine($"internal interface {entry.Interface.Name}");
+            sb.AppendLine($"public partial class {featureName}");
             sb.AppendLine("{");
-            foreach (var prop in GetProperties(entry.Interface))
-            {
-                var typeName = ResolveTypeName(prop.Type, ifaceToLocal);
-                sb.AppendLine($"    {typeName} {prop.Name} {{ get; set; }}");
-            }
-            sb.AppendLine("}");
-            sb.AppendLine();
+            sb.AppendLine("    partial class InfrastructureLayer");
+            sb.AppendLine("    {");
 
-            sb.AppendLine($"internal sealed record {entityName} : {entry.Interface.Name}");
-            sb.AppendLine("{");
-            foreach (var prop in GetProperties(entry.Interface))
+            foreach (var entry in entries)
             {
-                var typeName = ResolveTypeName(prop.Type, ifaceToLocal);
-                var defaultVal = GetDefault(prop.Type);
-                sb.Append($"    public {typeName} {prop.Name} {{ get; set; }}");
-                sb.AppendLine(defaultVal is not null ? $" = {defaultVal};" : string.Empty);
-            }
-            sb.AppendLine("}");
-            sb.AppendLine();
-        }
+                var entityName = StripLeadingI(entry.Interface.Name);
 
-        // RegisterEntities stays on CreateSample.InfrastructureLayer — it's the only feature
-        // that owns the schema for this domain. The DbContext generator calls it by FQN.
-        sb.AppendLine($"public partial class {featureName}");
-        sb.AppendLine("{");
-        sb.AppendLine("    partial class InfrastructureLayer");
-        sb.AppendLine("    {");
-        sb.AppendLine("        internal static void RegisterEntities(ModelBuilder modelBuilder)");
-        sb.AppendLine("        {");
-        foreach (var entry in entries)
-        {
-            var entityName = StripLeadingI(entry.Interface.Name);
-            if (!string.IsNullOrWhiteSpace(entry.ConfigurationBody))
-            {
-                var body = entry.ConfigurationBody!;
-                foreach (var e in entries)
+                sb.AppendLine($"        private interface {entry.Interface.Name}");
+                sb.AppendLine("        {");
+                foreach (var prop in GetProperties(entry.Interface))
                 {
-                    var concreteName = StripLeadingI(e.Interface.Name);
-                    body = body
-                        .Replace($"Entity<{e.Interface.Name}>()", $"Entity<{concreteName}>()")
-                        .Replace($"<{e.Interface.Name}>", $"<{concreteName}>")
-                        .Replace(e.Interface.Name + ".", concreteName + ".");
+                    var typeName = ResolveTypeName(prop.Type, ifaceToLocal);
+                    sb.AppendLine($"            {typeName} {prop.Name} {{ get; set; }}");
                 }
-                sb.AppendLine("            {");
-                sb.Append(body);
-                sb.AppendLine("            }");
+                sb.AppendLine("        }");
+                sb.AppendLine();
+
+                sb.AppendLine($"        private sealed record {entityName} : {entry.Interface.Name}");
+                sb.AppendLine("        {");
+                foreach (var prop in GetProperties(entry.Interface))
+                {
+                    var typeName = ResolveTypeName(prop.Type, ifaceToLocal);
+                    var defaultVal = GetDefault(prop.Type);
+                    sb.Append($"            public {typeName} {prop.Name} {{ get; set; }}");
+                    sb.AppendLine(defaultVal is not null ? $" = {defaultVal};" : string.Empty);
+                }
+                sb.AppendLine("        }");
+                sb.AppendLine();
             }
-            else
+
+            sb.AppendLine("        internal static void RegisterEntities(ModelBuilder modelBuilder)");
+            sb.AppendLine("        {");
+            foreach (var entry in entries)
             {
-                sb.AppendLine($"            modelBuilder.Entity<{entityName}>();");
+                var entityName = StripLeadingI(entry.Interface.Name);
+                if (!string.IsNullOrWhiteSpace(entry.ConfigurationBody))
+                {
+                    var body = entry.ConfigurationBody!;
+                    foreach (var e in entries)
+                    {
+                        var concreteName = StripLeadingI(e.Interface.Name);
+                        body = body
+                            .Replace($"Entity<{e.Interface.Name}>()", $"Entity<{concreteName}>()")
+                            .Replace($"<{e.Interface.Name}>", $"<{concreteName}>")
+                            .Replace(e.Interface.Name + ".", concreteName + ".");
+                    }
+                    sb.AppendLine("            {");
+                    sb.Append(body);
+                    sb.AppendLine("            }");
+                }
+                else
+                {
+                    sb.AppendLine($"            modelBuilder.Entity<{entityName}>();");
+                }
             }
+            sb.AppendLine("        }");
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+            sb.AppendLine();
         }
-        sb.AppendLine("        }");
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
 
         return sb.ToString();
     }

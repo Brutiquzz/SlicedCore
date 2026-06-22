@@ -502,3 +502,6 @@ appsettings.Production.json
 
 # Third-party compiler-generated output (unstable InterceptsLocationAttribute tokens)
 /src/ProjectTemplate/Generated/Microsoft.AspNetCore.OpenApi.SourceGenerators/
+
+# Roslyn source generator output — regenerated on every build, must not be committed
+/src/ProjectTemplate/Generated/ProjectTemplate.Generators/

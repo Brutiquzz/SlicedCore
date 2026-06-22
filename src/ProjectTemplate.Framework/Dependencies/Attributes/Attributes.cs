@@ -1,7 +1,7 @@
-namespace ProjectTemplate.Dependencies.Attributes;
-
 using System;
 using Microsoft.Extensions.DependencyInjection;
+
+namespace ProjectTemplate.Dependencies.Attributes;
 
 /// <summary>
 /// Base attribute that resolves a constructor parameter from the keyed DI container

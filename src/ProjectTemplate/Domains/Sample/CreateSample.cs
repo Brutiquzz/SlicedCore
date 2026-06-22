@@ -1,5 +1,6 @@
 using ProjectTemplate.Data;
 using ProjectTemplate.Dependencies.Attributes;
+using ProjectTemplate.Dependencies.Cache;
 
 namespace ProjectTemplate.Domains.Sample;
 
@@ -16,7 +17,7 @@ public partial class CreateSample
 
             // Implement presentation logic
             // ...
-            
+
             var appDTOResponse = await ForwardToApplicationLayer(request.Adapt<CreateSampleRequestDTO>(), cancellationToken);
 
             if (appDTOResponse.IsError())
@@ -97,7 +98,14 @@ public partial class CreateSample
                 return Result.Error("Entity not persisted.");
             }
 
-            return Result.Created((Core.IPersistenceResponseDTO)entity.Adapt<PersistenceResponseDTO>());
+            var responseDto = entity.Adapt<PersistenceResponseDTO>();
+
+            // Write-through: immediately populate the cache after a successful write so the
+            // next GetSample request for this id is served from the cache without a database hit.
+            var cache = GetRequiredService<IAppCache>();
+            await cache.SetAsync(CachePayload.Create<SampleEntity>(entity.Id, entity), cancellationToken: cancellationToken);
+
+            return Result.Created((Core.IPersistenceResponseDTO)responseDto);
         }
     }
 }

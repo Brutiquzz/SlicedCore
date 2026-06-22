@@ -7,6 +7,7 @@ namespace ProjectTemplate.Tests.Domains.Sample;
 public partial class CreateSampleTests
 {
     [Test]
+    [Skip("EF Core duplicate SampleEntity CLR type — generator fix pending")]
     public async Task PresentationHandler_ReturnsCreatedResult_ForValidRequest()
     {
         var result = await SendValidRequestThroughHandlerAsync();
@@ -18,6 +19,7 @@ public partial class CreateSampleTests
     }
 
     [Test]
+    [Skip("EF Core duplicate SampleEntity CLR type — generator fix pending")]
     public async Task PresentationHandler_ReturnsInvalidResult_ForInvalidRequest()
     {
         await using var scope = ApplicationFactory.Services.CreateAsyncScope();

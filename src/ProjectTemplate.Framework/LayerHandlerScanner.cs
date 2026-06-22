@@ -1,4 +1,5 @@
 using Cortex.Mediator;
+using Cortex.Mediator.Queries;
 using FluentValidation;
 using ProjectTemplate.Dependencies.Attributes;
 using System.Reflection;
@@ -6,48 +7,74 @@ using System.Reflection;
 namespace ProjectTemplate.Framework;
 
 /// <summary>
-/// Assembly-scanning helpers that register command handlers and layer-scoped
+/// Assembly-scanning helpers that register command/query handlers and layer-scoped
 /// FluentValidation validators with the DI container.
 /// </summary>
 public static class LayerHandlerScanner
 {
     /// <summary>
-    /// Scans <paramref name="assembly"/> for <see cref="ICommandHandler{TCommand,TResult}"/> implementations
-    /// and registers them as transient services — once for the concrete command type and once for each
-    /// command interface the concrete type implements (so the mediator can resolve by interface).
+    /// Scans <paramref name="assembly"/> for <see cref="ICommandHandler{TCommand,TResult}"/> and
+    /// <see cref="IQueryHandler{TQuery,TResult}"/> implementations and registers them as transient
+    /// services — once for the declared event type and once for each concrete event type that
+    /// implements the declared interface (so the mediator can resolve by the concrete record type
+    /// that is dispatched at runtime).
     /// </summary>
     /// <param name="services">The service collection to register handlers into.</param>
     /// <param name="assembly">The assembly to scan.</param>
     /// <returns>The same <paramref name="services"/> for chaining.</returns>
     public static IServiceCollection AddLayerHandlers(this IServiceCollection services, Assembly assembly)
     {
+        RegisterHandlers(
+            services,
+            assembly,
+            IsCommandHandlerInterface,
+            typeof(ICommandHandler<,>),
+            skipBaseEventInterface: typeof(ICommand<>));
+
+        RegisterHandlers(
+            services,
+            assembly,
+            IsQueryHandlerInterface,
+            typeof(IQueryHandler<,>),
+            skipBaseEventInterface: typeof(IQuery<>));
+
+        return services;
+    }
+
+    private static void RegisterHandlers(
+        IServiceCollection services,
+        Assembly assembly,
+        Func<Type, bool> isHandlerInterface,
+        Type openHandlerType,
+        Type skipBaseEventInterface)
+    {
         var handlerTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && !t.IsGenericTypeDefinition)
-            .Where(t => t.GetInterfaces().Any(IsCommandHandlerInterface));
+            .Where(t => t.GetInterfaces().Any(isHandlerInterface));
 
         foreach (var handlerType in handlerTypes)
         {
-            foreach (var handlerInterface in handlerType.GetInterfaces().Where(IsCommandHandlerInterface))
+            foreach (var handlerInterface in handlerType.GetInterfaces().Where(isHandlerInterface))
             {
                 var genericArgs = handlerInterface.GetGenericArguments();
-                var commandType = genericArgs[0];
+                var eventType = genericArgs[0];
                 var resultType = genericArgs[1];
 
-                // Register for the declared command type (may be an interface)
+                // Register for the declared event type (may be an interface)
                 services.AddTransient(handlerInterface, handlerType);
 
-                // If commandType is an interface, also register for every concrete type in the
+                // If eventType is an interface, also register for every concrete type in the
                 // assembly that implements it — the mediator dispatches with the concrete event record.
-                if (commandType.IsInterface)
+                if (eventType.IsInterface)
                 {
-                    foreach (var concreteCommand in assembly.GetTypes()
-                        .Where(t => t.IsClass && !t.IsAbstract && commandType.IsAssignableFrom(t)))
+                    foreach (var concreteEvent in assembly.GetTypes()
+                        .Where(t => t.IsClass && !t.IsAbstract && eventType.IsAssignableFrom(t)))
                     {
                         Type concreteHandlerServiceType;
                         try
                         {
-                            concreteHandlerServiceType = typeof(ICommandHandler<,>)
-                                .MakeGenericType(concreteCommand, resultType);
+                            concreteHandlerServiceType = openHandlerType
+                                .MakeGenericType(concreteEvent, resultType);
                         }
                         catch (ArgumentException)
                         {
@@ -58,16 +85,16 @@ public static class LayerHandlerScanner
                     }
                 }
 
-                // Also register for each ICommand interface the concrete command implements
-                // (skipping the raw ICommand<> base interface to avoid DI validation errors)
-                foreach (var commandInterface in commandType.GetInterfaces()
-                    .Where(i => !(i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>))))
+                // Also register for each event interface the concrete event implements
+                // (skipping the raw base interface to avoid DI validation errors)
+                foreach (var eventInterface in eventType.GetInterfaces()
+                    .Where(i => !(i.IsGenericType && i.GetGenericTypeDefinition() == skipBaseEventInterface)))
                 {
                     Type interfacedHandlerServiceType;
                     try
                     {
-                        interfacedHandlerServiceType = typeof(ICommandHandler<,>)
-                            .MakeGenericType(commandInterface, resultType);
+                        interfacedHandlerServiceType = openHandlerType
+                            .MakeGenericType(eventInterface, resultType);
                     }
                     catch (ArgumentException)
                     {
@@ -78,8 +105,6 @@ public static class LayerHandlerScanner
                 }
             }
         }
-
-        return services;
     }
 
     /// <summary>
@@ -120,4 +145,7 @@ public static class LayerHandlerScanner
 
     private static bool IsCommandHandlerInterface(Type type) =>
         type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ICommandHandler<,>);
+
+    private static bool IsQueryHandlerInterface(Type type) =>
+        type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IQueryHandler<,>);
 }

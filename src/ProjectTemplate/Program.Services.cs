@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Compliance.Redaction;
 using ProjectTemplate.Dependencies;
+using ProjectTemplate.Dependencies.Cache;
 using ProjectTemplate.Dependencies.OpenApi;
 using ProjectTemplate.Dependencies.Resilience;
 using ProjectTemplate.Framework;
@@ -126,6 +127,12 @@ public partial class Program
         // Resilience: registers the Default HTTP client with retry, circuit breaker, and timeout
         // policies driven by the "Resilience" section of appsettings.json.
         builder.Services.AddSlicedCoreResilience(builder.Configuration);
+
+        // Caching: registers the hybrid cache (L1 in-process + L2 distributed) driven by the
+        // "Cache" section of appsettings.json. By default, an in-memory distributed cache is
+        // used, which is suitable for single-instance deployments. To enable Redis for scaled
+        // deployments, set "Cache:Redis:ConnectionString" to your Redis connection string.
+        builder.Services.AddSlicedCoreCache(builder.Configuration);
 
         // Response Compression: enables Brotli and Gzip compression for JSON, XML, and other
         // text-based responses. CompressionLevel.Fastest balances CPU usage with payload reduction.
