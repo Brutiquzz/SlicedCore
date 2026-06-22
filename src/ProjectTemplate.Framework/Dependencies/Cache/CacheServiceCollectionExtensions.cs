@@ -10,13 +10,13 @@ public static class CacheServiceCollectionExtensions
     /// <summary>
     /// Registers the <see cref="IAppCache"/> service and its backing cache stores.
     /// <para>
-    /// When <c>Cache:Redis:ConnectionString</c> is set to a non-empty value in configuration,
-    /// a Redis distributed cache is used as the L2 backing store.
-    /// Otherwise, a distributed in-memory cache is used, which is suitable for
-    /// single-instance deployments.
+    /// <see cref="HybridCache"/> always operates with an L1 in-process memory layer,
+    /// provided automatically by <c>AddHybridCache()</c>.
     /// </para>
     /// <para>
-    /// Either way, an L1 in-process memory cache is always active for the fastest possible reads.
+    /// When <c>Cache:Redis:ConnectionString</c> is set, Redis is registered as an L2
+    /// distributed backing store — shared across all instances and surviving process restarts.
+    /// When Redis is not configured, only L1 is active.
     /// </para>
     /// </summary>
     /// <param name="services">The service collection to configure.</param>
@@ -49,11 +49,6 @@ public static class CacheServiceCollectionExtensions
                 options.Configuration = redisConnectionString;
                 options.InstanceName = instanceName;
             });
-        }
-        else
-        {
-            // Single-instance fallback: distributed in-memory cache backed by IMemoryCache.
-            services.AddDistributedMemoryCache();
         }
 
         services.AddHybridCache();

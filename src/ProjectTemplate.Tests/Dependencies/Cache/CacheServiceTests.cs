@@ -59,7 +59,7 @@ public sealed class CacheServiceTests
     }
 
     [Test]
-    public async Task AddSlicedCoreCache_UsesInMemoryDistributedCache_WhenRedisConnectionStringIsEmpty()
+    public async Task AddSlicedCoreCache_DoesNotRegisterDistributedCache_WhenRedisConnectionStringIsEmpty()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -73,15 +73,14 @@ public sealed class CacheServiceTests
         services.AddSlicedCoreCache(config);
         var provider = services.BuildServiceProvider();
 
-        // With no Redis connection string, a distributed memory cache should be registered.
+        // No Redis → no L2; HybridCache runs L1-only.
         var distributedCache = provider.GetService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
 
-        await Assert.That(distributedCache).IsNotNull();
-        await Assert.That(distributedCache!.GetType().Name).Contains("Memory");
+        await Assert.That(distributedCache).IsNull();
     }
 
     [Test]
-    public async Task AddSlicedCoreCache_UsesInMemoryDistributedCache_WhenRedisConfigurationIsNull()
+    public async Task AddSlicedCoreCache_DoesNotRegisterDistributedCache_WhenRedisConfigurationIsNull()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -94,9 +93,9 @@ public sealed class CacheServiceTests
         services.AddSlicedCoreCache(config);
         var provider = services.BuildServiceProvider();
 
+        // No Redis → no L2; HybridCache runs L1-only.
         var distributedCache = provider.GetService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
 
-        await Assert.That(distributedCache).IsNotNull();
-        await Assert.That(distributedCache!.GetType().Name).Contains("Memory");
+        await Assert.That(distributedCache).IsNull();
     }
 }
