@@ -75,21 +75,26 @@ public partial class GetSample
             // directly from the cache without hitting the database.
             var cache = GetRequiredService<IAppCache>();
 
-            var cached = await cache.GetOrCreateAsync<SampleCacheEntry?>(
-                SampleCacheEntry.CacheKey(entity.Id),
+            var cached = await cache.GetOrCreateAsync(
+                CachePayload.KeyFor<SampleEntity>(entity.Id),
                 async ct =>
                 {
                     var dbContext = GetRequiredDbContext<AppDbContext>();
                     var found = await dbContext.Set<SampleEntity>()
                         .FindAsync(new object[] { entity.Id }, ct);
-                    return found?.Adapt<SampleCacheEntry>();
+                    return found is null ? null : CachePayload.Create<SampleEntity>(found.Id, found);
                 },
                 cancellationToken: cancellationToken);
 
             if (cached is null)
                 return Result.NotFound();
 
-            return Result.Success((Core.IPersistenceResponseDTO)cached.Adapt<PersistenceResponseDTO>());
+            var result = cached.Get<SampleEntity>();
+
+            if (result is null)
+                return Result.NotFound();
+
+            return Result.Success((Core.IPersistenceResponseDTO)result.Adapt<PersistenceResponseDTO>());
         }
     }
 }

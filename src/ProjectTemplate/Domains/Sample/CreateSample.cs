@@ -103,7 +103,7 @@ public partial class CreateSample
             // Write-through: immediately populate the cache after a successful write so the
             // next GetSample request for this id is served from the cache without a database hit.
             var cache = GetRequiredService<IAppCache>();
-            await cache.SetAsync(SampleCacheEntry.CacheKey(entity.Id), entity.Adapt<SampleCacheEntry>(), cancellationToken: cancellationToken);
+            await cache.SetAsync(CachePayload.Create<SampleEntity>(entity.Id, entity), cancellationToken: cancellationToken);
 
             return Result.Created((Core.IPersistenceResponseDTO)responseDto);
         }

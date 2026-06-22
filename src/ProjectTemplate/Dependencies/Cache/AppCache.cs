@@ -26,9 +26,9 @@ internal sealed class AppCache : IAppCache
     }
 
     /// <inheritdoc/>
-    public async Task<T?> GetOrCreateAsync<T>(
+    public async Task<CachePayload?> GetOrCreateAsync(
         string key,
-        Func<CancellationToken, ValueTask<T?>> factory,
+        Func<CancellationToken, ValueTask<CachePayload?>> factory,
         TimeSpan? ttl = null,
         CancellationToken cancellationToken = default)
     {
@@ -41,9 +41,8 @@ internal sealed class AppCache : IAppCache
     }
 
     /// <inheritdoc/>
-    public async Task SetAsync<T>(
-        string key,
-        T value,
+    public async Task SetAsync(
+        CachePayload payload,
         TimeSpan? ttl = null,
         CancellationToken cancellationToken = default)
     {
@@ -52,7 +51,7 @@ internal sealed class AppCache : IAppCache
             Expiration = ttl ?? _defaultTtl
         };
 
-        await _hybridCache.SetAsync(key, value, entryOptions, cancellationToken: cancellationToken);
+        await _hybridCache.SetAsync(payload.Key, payload, entryOptions, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
