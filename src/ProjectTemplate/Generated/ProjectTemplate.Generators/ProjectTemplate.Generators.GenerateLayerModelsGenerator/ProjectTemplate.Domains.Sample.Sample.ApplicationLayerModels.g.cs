@@ -3,16 +3,43 @@
 
 namespace ProjectTemplate.Domains.Sample;
 
-internal interface ISample
+public partial class CreateSample
 {
-    int Id { get; set; }
-    string Name { get; set; }
-    string Name2 { get; set; }
+    partial class ApplicationLayer
+    {
+        private interface ISample
+        {
+            int Id { get; set; }
+            string Name { get; set; }
+            string Name2 { get; set; }
+        }
+
+        private sealed class Sample : ISample
+        {
+            public int Id { get; set; } = default;
+            public string Name { get; set; } = string.Empty;
+            public string Name2 { get; set; } = string.Empty;
+        }
+    }
 }
 
-internal sealed class Sample : ISample
+public partial class GetSample
 {
-    public int Id { get; set; } = default;
-    public string Name { get; set; } = string.Empty;
-    public string Name2 { get; set; } = string.Empty;
+    partial class ApplicationLayer
+    {
+        private interface ISample
+        {
+            int Id { get; set; }
+            string Name { get; set; }
+            string Name2 { get; set; }
+        }
+
+        private sealed class Sample : ISample
+        {
+            public int Id { get; set; } = default;
+            public string Name { get; set; } = string.Empty;
+            public string Name2 { get; set; } = string.Empty;
+        }
+    }
 }
+

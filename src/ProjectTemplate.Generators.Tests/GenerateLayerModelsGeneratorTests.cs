@@ -59,7 +59,7 @@ public class GenerateLayerModelsGeneratorTests
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
-        await Assert.That(source).Contains("internal interface IOrder");
+        await Assert.That(source).Contains("        private interface IOrder");
     }
 
     [Test]
@@ -69,7 +69,7 @@ public class GenerateLayerModelsGeneratorTests
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
-        await Assert.That(source).Contains("internal sealed class Order : IOrder");
+        await Assert.That(source).Contains("        private sealed class Order : IOrder");
     }
 
     [Test]
@@ -90,7 +90,7 @@ public class GenerateLayerModelsGeneratorTests
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.InfrastructureLayerModels.g.cs"];
-        await Assert.That(source).Contains("internal interface IOrderEntity");
+        await Assert.That(source).Contains("private interface IOrderEntity");
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class GenerateLayerModelsGeneratorTests
             GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
 
         var source = sources["MyApp.Domains.Order.Order.InfrastructureLayerModels.g.cs"];
-        await Assert.That(source).Contains("internal sealed record OrderEntity : IOrderEntity");
+        await Assert.That(source).Contains("private sealed record OrderEntity : IOrderEntity");
     }
 
     [Test]
@@ -148,6 +148,68 @@ public class GenerateLayerModelsGeneratorTests
     }
 
     [Test]
+    public async Task BusinessTypesAreNestedInsideApplicationLayer()
+    {
+        var sources = GeneratorTestHelper.GetSources(
+            GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
+
+        var source = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
+
+        await Assert.That(source).Contains("partial class ApplicationLayer");
+        await Assert.That(source).Contains("        private interface IOrder");
+        await Assert.That(source).Contains("        private sealed class Order : IOrder");
+    }
+
+    [Test]
+    public async Task BusinessTypesAreNotEmittedAtNamespaceLevel()
+    {
+        var sources = GeneratorTestHelper.GetSources(
+            GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(DomainSource));
+
+        var source = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
+
+        await Assert.That(source).DoesNotContain("\nprivate interface IOrder");
+        await Assert.That(source).DoesNotContain("\nprivate sealed class Order");
+        await Assert.That(source).DoesNotContain("\ninternal interface IOrder");
+        await Assert.That(source).DoesNotContain("\ninternal sealed class Order");
+    }
+
+    [Test]
+    public async Task EachFeatureGetsItsOwnPrivateBusinessTypes()
+    {
+        const string multiFeatureSource = """
+            using ProjectTemplate.Dependencies.Attributes;
+
+            namespace MyApp.Domains.Order;
+
+            [Domain]
+            public class OrderDomain
+            {
+                [BusinessModel]
+                private interface IOrder
+                {
+                    string Name { get; set; }
+                }
+            }
+
+            [Feature(FeatureType.Command)]
+            public partial class CreateOrder { }
+
+            [Feature(FeatureType.Query)]
+            public partial class GetOrder { }
+            """;
+
+        var result = GeneratorTestHelper.Run<GenerateLayerModelsGenerator>(multiFeatureSource);
+        var sources = GeneratorTestHelper.GetSources(result);
+        var appSource = sources["MyApp.Domains.Order.Order.ApplicationLayerModels.g.cs"];
+
+        await Assert.That(appSource).Contains("partial class CreateOrder");
+        await Assert.That(appSource).Contains("partial class GetOrder");
+        await Assert.That(appSource.Split("private interface IOrder").Length - 1).IsEqualTo(2);
+        await Assert.That(appSource.Split("private sealed class Order").Length - 1).IsEqualTo(2);
+    }
+
+    [Test]
     public async Task EntityTypesAreNestedInsideInfrastructureLayer()
     {
         var sources = GeneratorTestHelper.GetSources(
@@ -157,8 +219,8 @@ public class GenerateLayerModelsGeneratorTests
 
         // Entity types must be declared inside InfrastructureLayer, not at namespace level.
         await Assert.That(source).Contains("partial class InfrastructureLayer");
-        await Assert.That(source).Contains("        internal interface IOrderEntity");
-        await Assert.That(source).Contains("        internal sealed record OrderEntity : IOrderEntity");
+        await Assert.That(source).Contains("        private interface IOrderEntity");
+        await Assert.That(source).Contains("        private sealed record OrderEntity : IOrderEntity");
     }
 
     [Test]
@@ -170,6 +232,8 @@ public class GenerateLayerModelsGeneratorTests
         var source = sources["MyApp.Domains.Order.Order.InfrastructureLayerModels.g.cs"];
 
         // Namespace-level (non-indented) entity declarations must not appear.
+        await Assert.That(source).DoesNotContain("\nprivate interface IOrderEntity");
+        await Assert.That(source).DoesNotContain("\nprivate sealed record OrderEntity");
         await Assert.That(source).DoesNotContain("\ninternal interface IOrderEntity");
         await Assert.That(source).DoesNotContain("\ninternal sealed record OrderEntity");
     }
@@ -240,7 +304,7 @@ public class GenerateLayerModelsGeneratorTests
         var infraSource = sources["MyApp.Domains.Order.Order.InfrastructureLayerModels.g.cs"];
 
         // Each feature's InfrastructureLayer must declare the entity interface and record.
-        await Assert.That(infraSource.Split("internal interface IOrderEntity").Length - 1).IsEqualTo(2);
-        await Assert.That(infraSource.Split("internal sealed record OrderEntity").Length - 1).IsEqualTo(2);
+        await Assert.That(infraSource.Split("private interface IOrderEntity").Length - 1).IsEqualTo(2);
+        await Assert.That(infraSource.Split("private sealed record OrderEntity").Length - 1).IsEqualTo(2);
     }
 }

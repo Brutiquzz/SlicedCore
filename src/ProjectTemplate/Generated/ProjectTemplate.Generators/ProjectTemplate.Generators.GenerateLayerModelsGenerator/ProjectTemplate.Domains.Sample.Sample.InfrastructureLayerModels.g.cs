@@ -9,7 +9,7 @@ public partial class CreateSample
 {
     partial class InfrastructureLayer
     {
-        internal interface ISampleEntity
+        private interface ISampleEntity
         {
             int Id { get; set; }
             string Name { get; set; }
@@ -18,7 +18,7 @@ public partial class CreateSample
             SampleEntityDetail Detail { get; set; }
         }
 
-        internal sealed record SampleEntity : ISampleEntity
+        private sealed record SampleEntity : ISampleEntity
         {
             public int Id { get; set; } = default;
             public string Name { get; set; } = string.Empty;
@@ -27,14 +27,14 @@ public partial class CreateSample
             public SampleEntityDetail Detail { get; set; } = null!;
         }
 
-        internal interface ISampleEntityDetail
+        private interface ISampleEntityDetail
         {
             int Id { get; set; }
             int SampleEntityId { get; set; }
             string Detail { get; set; }
         }
 
-        internal sealed record SampleEntityDetail : ISampleEntityDetail
+        private sealed record SampleEntityDetail : ISampleEntityDetail
         {
             public int Id { get; set; } = default;
             public int SampleEntityId { get; set; } = default;
@@ -72,7 +72,7 @@ public partial class GetSample
 {
     partial class InfrastructureLayer
     {
-        internal interface ISampleEntity
+        private interface ISampleEntity
         {
             int Id { get; set; }
             string Name { get; set; }
@@ -81,7 +81,7 @@ public partial class GetSample
             SampleEntityDetail Detail { get; set; }
         }
 
-        internal sealed record SampleEntity : ISampleEntity
+        private sealed record SampleEntity : ISampleEntity
         {
             public int Id { get; set; } = default;
             public string Name { get; set; } = string.Empty;
@@ -90,14 +90,14 @@ public partial class GetSample
             public SampleEntityDetail Detail { get; set; } = null!;
         }
 
-        internal interface ISampleEntityDetail
+        private interface ISampleEntityDetail
         {
             int Id { get; set; }
             int SampleEntityId { get; set; }
             string Detail { get; set; }
         }
 
-        internal sealed record SampleEntityDetail : ISampleEntityDetail
+        private sealed record SampleEntityDetail : ISampleEntityDetail
         {
             public int Id { get; set; } = default;
             public int SampleEntityId { get; set; } = default;
