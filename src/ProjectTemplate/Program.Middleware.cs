@@ -56,6 +56,10 @@ public partial class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Rate limiting — placed after authentication/authorization so the global partitioner
+        // can partition by authenticated user identity before falling back to IP address.
+        app.UseRateLimiter();
+
         // Health check endpoints — no authentication required so that orchestrators can probe freely.
         // /healthz       — overall status (all registered checks)
         // /healthz/live  — liveness (host is running; no dependency checks)

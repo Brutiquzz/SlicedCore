@@ -40,6 +40,7 @@ The "AI/hallucination safe" row means the architecture is structurally resistant
 - **PII redaction** via `Microsoft.Extensions.Compliance.Redaction`
 - **Opinionated JSON serialization** — camelCase, null-omitting, case-insensitive via `System.Text.Json`
 - **ASP.NET Core Health Checks** with `/healthz`, `/healthz/live`, and `/healthz/ready` endpoints
+- **Built-in rate limiting** — global partitioned limiter plus `fixed`, `sliding`, `token`, and `strict` named policies configured from `appsettings.json`
 - **TUnit** integration tests with `WebApplicationFactory`
 
 ---
@@ -515,6 +516,23 @@ All runtime configuration lives in `appsettings.json`. Override per environment 
 | `Resilience` | `CircuitBreaker.MinimumThroughput` | Minimum requests before circuit can trip (default: `10`). |
 | `Resilience` | `CircuitBreaker.BreakDurationSeconds` | Duration in seconds the circuit stays open (default: `15`). |
 | `Resilience` | `Timeout.AttemptTimeoutSeconds` | Per-attempt timeout in seconds (default: `10`). |
+| `RateLimiting` | `Global.PermitLimit` | Max requests per identity per window for the global baseline (default: `100`). |
+| `RateLimiting` | `Global.WindowSeconds` | Global window size in seconds (default: `60`). |
+| `RateLimiting` | `Global.QueueLimit` | Global queue depth; `0` = reject immediately (default: `10`). |
+| `RateLimiting` | `Fixed.PermitLimit` | Max requests for the `fixed` named policy (default: `60`). |
+| `RateLimiting` | `Fixed.WindowSeconds` | Window size in seconds for `fixed` (default: `60`). |
+| `RateLimiting` | `Fixed.QueueLimit` | Queue depth for `fixed`; `0` = reject immediately (default: `5`). |
+| `RateLimiting` | `Sliding.PermitLimit` | Max requests for the `sliding` named policy (default: `60`). |
+| `RateLimiting` | `Sliding.WindowSeconds` | Window size in seconds for `sliding` (default: `60`). |
+| `RateLimiting` | `Sliding.SegmentsPerWindow` | Number of sliding segments (default: `6`). |
+| `RateLimiting` | `Sliding.QueueLimit` | Queue depth for `sliding` (default: `5`). |
+| `RateLimiting` | `Token.TokenLimit` | Maximum bucket capacity for the `token` named policy (default: `100`). |
+| `RateLimiting` | `Token.TokensPerPeriod` | Tokens added each replenishment period for `token` (default: `20`). |
+| `RateLimiting` | `Token.ReplenishmentPeriodSeconds` | Replenishment interval in seconds for `token` (default: `10`). |
+| `RateLimiting` | `Token.QueueLimit` | Queue depth for `token` (default: `10`). |
+| `RateLimiting` | `Strict.PermitLimit` | Max requests for the `strict` named policy (default: `10`). |
+| `RateLimiting` | `Strict.WindowSeconds` | Window size in seconds for `strict` (default: `60`). |
+| `RateLimiting` | `Strict.QueueLimit` | Queue depth for `strict`; `0` = reject immediately (default: `0`). |
 
 By default, the template keeps endpoint/port selection in environment/template configuration:
 
@@ -608,6 +626,55 @@ readinessProbe:
 ```
 
 JWT and CORS fall back to the defaults in `appsettings.json`. Override them in `appsettings.Development.json` if your local IdP differs.
+
+---
+
+### Rate Limiting
+
+The template registers `Microsoft.AspNetCore.RateLimiting` middleware via `AddSlicedCoreRateLimiting` in `Program.Services.cs`. Rate limiting is applied **after** authentication and authorization so the global partitioner can use the authenticated user identity as a partition key.
+
+#### Global limiter
+
+Every request passes through a global fixed-window limiter before reaching any named policy. Traffic is partitioned by:
+
+1. Authenticated user identity (`HttpContext.User.Identity.Name`)
+2. Remote IP address
+3. Fall-through key `anonymous`
+
+#### Named policies
+
+Apply a named policy to any minimal-API endpoint:
+
+```csharp
+app.MapPost("/api/login", handler)
+   .RequireRateLimiting(RateLimitingPolicies.Strict);
+
+app.MapGet("/api/data", handler)
+   .RequireRateLimiting(RateLimitingPolicies.Sliding);
+```
+
+Or via attribute on an endpoint class:
+
+```csharp
+[EnableRateLimiting(RateLimitingPolicies.Token)]
+public class MyEndpoint { }
+```
+
+Opt out for internal or system endpoints:
+
+```csharp
+app.MapGet("/internal/status", handler)
+   .DisableRateLimiting();
+```
+
+| Policy | Strategy | Default limit | Intended use |
+|---|---|---|---|
+| `fixed` | Fixed window | 60 req / 60 s | General traffic control |
+| `sliding` | Sliding window | 60 req / 60 s, 6 segments | Fair distribution under sustained load |
+| `token` | Token bucket | 100 tokens, +20 / 10 s | Burst-friendly APIs |
+| `strict` | Fixed window | 10 req / 60 s, no queue | Authentication / login endpoints |
+
+All limits are configurable via the `RateLimiting` section of `appsettings.json` — see the [Configuration](#configuration) table above for all keys. Exceeding any limit returns **HTTP 429 Too Many Requests**.
 
 ---
 

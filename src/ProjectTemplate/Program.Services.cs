@@ -7,6 +7,7 @@ using Microsoft.Extensions.Compliance.Redaction;
 using ProjectTemplate.Dependencies;
 using ProjectTemplate.Dependencies.Cache;
 using ProjectTemplate.Dependencies.OpenApi;
+using ProjectTemplate.Dependencies.RateLimiting;
 using ProjectTemplate.Dependencies.Resilience;
 using ProjectTemplate.Framework;
 using System.IO.Compression;
@@ -188,5 +189,11 @@ public partial class Program
                     policy.AllowCredentials();
             });
         });
+
+        // Rate Limiting: partitioned fixed-window global baseline plus named policies
+        // (fixed, sliding, token, strict) configured in appsettings.json under "RateLimiting".
+        // Apply per-endpoint with .RequireRateLimiting("policy-name") or [EnableRateLimiting("policy-name")].
+        // Opt out for internal/system endpoints with .DisableRateLimiting() or [DisableRateLimiting].
+        builder.Services.AddSlicedCoreRateLimiting(builder.Configuration);
     }
 }
