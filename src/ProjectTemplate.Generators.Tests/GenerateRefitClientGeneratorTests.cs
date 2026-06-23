@@ -122,6 +122,7 @@ public class GenerateRefitClientGeneratorTests
 
         await Assert.That(source).Contains("public sealed class OrderClient");
         await Assert.That(source).Contains("public GetOrderRequestBuilder GetOrder()");
+        await Assert.That(source).Contains("public GetOrderRequestBuilder GetOrder(int id)");
         await Assert.That(source).Contains("public GetOrderRequestBuilder WithId(");
         await Assert.That(source).Contains("public async global::System.Threading.Tasks.Task<GetOrderResponse> Send(");
     }

@@ -349,6 +349,24 @@ public sealed class GenerateRefitClientGenerator : IIncrementalGenerator
             sb.AppendLine($"    public {endpoint.MethodName}RequestBuilder {endpoint.MethodName}()");
             sb.AppendLine($"        => new {endpoint.MethodName}RequestBuilder(_api);");
             sb.AppendLine();
+
+            if (endpoint.RouteParameters.Count > 0)
+            {
+                sb.Append($"    public {endpoint.MethodName}RequestBuilder {endpoint.MethodName}(");
+                sb.Append(string.Join(", ", endpoint.RouteParameters.Select(static parameter => $"{parameter.TypeName} {ToCamelCase(parameter.Name)}")));
+                sb.AppendLine(")");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        var builder = new {endpoint.MethodName}RequestBuilder(_api);");
+
+                foreach (var parameter in endpoint.RouteParameters)
+                {
+                    sb.AppendLine($"        builder.With{parameter.Name}({ToCamelCase(parameter.Name)});");
+                }
+
+                sb.AppendLine("        return builder;");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+            }
         }
         sb.AppendLine("}");
         sb.AppendLine();

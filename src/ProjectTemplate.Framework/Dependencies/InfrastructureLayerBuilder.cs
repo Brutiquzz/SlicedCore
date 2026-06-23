@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using ProjectTemplate.Dependencies.Attributes;
 
 namespace ProjectTemplate.Dependencies;
@@ -12,13 +13,13 @@ namespace ProjectTemplate.Dependencies;
 /// </summary>
 public sealed class InfrastructureLayerBuilder
 {
-    private readonly WebApplicationBuilder _builder;
+    private readonly IHostApplicationBuilder _builder;
 
     /// <summary>Provides read-only access to the application configuration for use during service registration.</summary>
     public IConfiguration Configuration => _builder.Configuration;
 
     /// <param name="builder">The web application builder to register services into.</param>
-    public InfrastructureLayerBuilder(WebApplicationBuilder builder)
+    public InfrastructureLayerBuilder(IHostApplicationBuilder builder)
     {
         _builder = builder;
     }
@@ -32,6 +33,14 @@ public sealed class InfrastructureLayerBuilder
         return this;
     }
 
+    /// <summary>Registers a transient infrastructure-layer-keyed <typeparamref name="TService"/> using a factory.</summary>
+    public InfrastructureLayerBuilder AddTransient<TService>(Func<IServiceProvider, TService> implementationFactory)
+        where TService : class
+    {
+        _builder.Services.AddTransientInfrastructureDependency(implementationFactory);
+        return this;
+    }
+
     /// <summary>Registers <typeparamref name="TImplementation"/> as a scoped infrastructure-layer-keyed <typeparamref name="TService"/>.</summary>
     public InfrastructureLayerBuilder AddScoped<TService, TImplementation>()
         where TService : class
@@ -41,12 +50,28 @@ public sealed class InfrastructureLayerBuilder
         return this;
     }
 
+    /// <summary>Registers a scoped infrastructure-layer-keyed <typeparamref name="TService"/> using a factory.</summary>
+    public InfrastructureLayerBuilder AddScoped<TService>(Func<IServiceProvider, TService> implementationFactory)
+        where TService : class
+    {
+        _builder.Services.AddScopedInfrastructureDependency(implementationFactory);
+        return this;
+    }
+
     /// <summary>Registers <typeparamref name="TImplementation"/> as a singleton infrastructure-layer-keyed <typeparamref name="TService"/>.</summary>
     public InfrastructureLayerBuilder AddSingleton<TService, TImplementation>()
         where TService : class
         where TImplementation : class, TService
     {
         _builder.Services.AddSingletonInfrastructureDependency<TService, TImplementation>();
+        return this;
+    }
+
+    /// <summary>Registers a singleton infrastructure-layer-keyed <typeparamref name="TService"/> using a factory.</summary>
+    public InfrastructureLayerBuilder AddSingleton<TService>(Func<IServiceProvider, TService> implementationFactory)
+        where TService : class
+    {
+        _builder.Services.AddSingletonInfrastructureDependency(implementationFactory);
         return this;
     }
 

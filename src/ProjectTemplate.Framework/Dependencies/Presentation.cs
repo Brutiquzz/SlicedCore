@@ -47,6 +47,20 @@ public abstract class Presentation
         where TQuery : Cortex.Mediator.Queries.IQuery<TResult>
         => _mediator.SendQueryAsync<TQuery, TResult>(query, cancellationToken);
 
+    /// <summary>Forwards a command directly to this feature's infrastructure layer. For use by advanced presentation orchestration only.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    protected System.Threading.Tasks.Task<TResult> ForwardToInfrastructureLayerCore<TCommand, TResult>(
+        TCommand command, System.Threading.CancellationToken cancellationToken)
+        where TCommand : Cortex.Mediator.Commands.ICommand<TResult>
+        => _mediator.SendCommandAsync<TCommand, TResult>(command, cancellationToken);
+
+    /// <summary>Forwards a query directly to this feature's infrastructure layer. For use by advanced presentation orchestration only.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    protected System.Threading.Tasks.Task<TResult> ForwardToInfrastructureLayerCoreQuery<TQuery, TResult>(
+        TQuery query, System.Threading.CancellationToken cancellationToken)
+        where TQuery : Cortex.Mediator.Queries.IQuery<TResult>
+        => _mediator.SendQueryAsync<TQuery, TResult>(query, cancellationToken);
+
     /// <summary>Resolves a required presentation-layer-keyed service of type <typeparamref name="T"/>.</summary>
     protected T GetRequiredService<T>() where T : class
         => serviceProvider.GetRequiredPresentationDependency<T>();
