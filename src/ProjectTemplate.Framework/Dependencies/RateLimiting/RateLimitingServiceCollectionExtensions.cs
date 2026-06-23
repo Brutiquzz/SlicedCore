@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ProjectTemplate.Dependencies;
+using System.Net;
 using System.Threading.RateLimiting;
 
 namespace ProjectTemplate.Dependencies.RateLimiting;
@@ -63,6 +65,39 @@ public static class RateLimitingServiceCollectionExtensions
         services.AddRateLimiter(limiterOptions =>
         {
             limiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            limiterOptions.OnRejected = (context, cancellationToken) =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger(typeof(RateLimitingServiceCollectionExtensions));
+
+                var partitionKey = context.HttpContext.User.Identity?.Name
+                    ?? context.HttpContext.Connection.RemoteIpAddress?.ToString()
+                    ?? "anonymous";
+
+                var endpoint = context.HttpContext.GetEndpoint()?.DisplayName ?? context.HttpContext.Request.Path.ToString();
+                var sanitizedEndpoint = SanitizeLogValue(endpoint);
+                var policy = context.Lease.TryGetMetadata(MetadataName.ReasonPhrase, out var reason) ? reason : "global";
+                var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfterValue)
+                    ? (TimeSpan?)retryAfterValue
+                    : null;
+
+                logger.LogWarning(
+                    "Rate limit exceeded. Partition={PartitionKey} Endpoint={Endpoint} Policy={Policy} RetryAfter={RetryAfter}",
+                    partitionKey,
+                    sanitizedEndpoint,
+                    policy,
+                    retryAfter?.TotalSeconds is { } seconds ? $"{seconds}s" : "N/A");
+
+                if (retryAfter.HasValue)
+                {
+                    context.HttpContext.Response.Headers[HttpResponseHeader.RetryAfter.ToString()] =
+                        ((int)retryAfter.Value.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                return ValueTask.CompletedTask;
+            };
 
             // Global limiter: applied to every request before named policies.
             // Partitioned by authenticated user identity → remote IP → "anonymous".
@@ -172,4 +207,11 @@ public static class RateLimitingServiceCollectionExtensions
         context.User.Identity?.Name
         ?? context.Connection.RemoteIpAddress?.ToString()
         ?? "anonymous";
+
+    /// <summary>
+    /// Strips newline and carriage-return characters from a user-provided string to prevent log forging.
+    /// </summary>
+    private static string SanitizeLogValue(string value) =>
+        value.Replace("\r", string.Empty, StringComparison.Ordinal)
+             .Replace("\n", string.Empty, StringComparison.Ordinal);
 }
