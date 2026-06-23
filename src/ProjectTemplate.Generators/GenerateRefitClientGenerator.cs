@@ -384,8 +384,15 @@ public sealed class GenerateRefitClientGenerator : IIncrementalGenerator
         }
         if (endpoint.HasBody)
         {
+            var routeParamNames = new HashSet<string>(
+                endpoint.RouteParameters.Select(static p => p.Name),
+                StringComparer.OrdinalIgnoreCase);
+
             foreach (var property in endpoint.RequestProperties)
             {
+                if (routeParamNames.Contains(property.Name))
+                    continue;
+
                 sb.AppendLine($"    public {endpoint.MethodName}RequestBuilder With{property.Name}({property.TypeName} value)");
                 sb.AppendLine("    {");
                 sb.AppendLine($"        _request.{property.Name} = value;");

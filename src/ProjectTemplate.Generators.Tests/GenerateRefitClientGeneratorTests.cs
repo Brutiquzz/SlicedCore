@@ -53,6 +53,25 @@ public class GenerateRefitClientGeneratorTests
                 }
             }
         }
+
+        [Feature(FeatureType.Command)]
+        public partial class UpdateOrder
+        {
+            public interface IUpdateOrderRequest { int Id { get; set; } string Name { get; set; } }
+            public interface IUpdateOrderResponse { int Id { get; set; } string Name { get; set; } }
+
+            partial class PresentationLayer
+            {
+                private sealed class UpdateOrderFeatureEndpoint : IEndpoint
+                {
+                    public void MapEndpoint(IEndpointRouteBuilder builder)
+                    {
+                        builder.MapPut("/orders/{id:int}", async (int id, UpdateOrderRequest request, IMediator mediator, CancellationToken cancellationToken) => { request.Id = id; return request; })
+                            .WithName("UpdateOrder");
+                    }
+                }
+            }
+        }
         """;
 
     [Test]
@@ -121,5 +140,34 @@ public class GenerateRefitClientGeneratorTests
         await Assert.That(source).Contains("AddMyAppClient(");
         await Assert.That(source).Contains("BearerTokenProvider");
         await Assert.That(source).Contains("public sealed class MyAppClientApiException");
+    }
+
+    [Test]
+    public async Task BuilderDoesNotGenerateDuplicateWithMethodWhenRouteParamAndBodyPropertyShareName()
+    {
+        var sources = GeneratorTestHelper.GetSources(
+            GeneratorTestHelper.Run<GenerateRefitClientGenerator>(ApiSource));
+
+        var source = sources["MyApp.Client.RefitClients.g.cs"];
+
+        // UpdateOrder has route {id} AND body property Id — WithId should only appear once
+        var builderStart = source.IndexOf("public sealed class UpdateOrderRequestBuilder", StringComparison.Ordinal);
+        await Assert.That(builderStart).IsGreaterThanOrEqualTo(0);
+
+        var builderSection = source.Substring(builderStart);
+        var nextClass = builderSection.IndexOf("public sealed class ", 1, StringComparison.Ordinal);
+        if (nextClass > 0)
+            builderSection = builderSection.Substring(0, nextClass);
+
+        var withIdCount = 0;
+        var search = "public UpdateOrderRequestBuilder WithId(";
+        var pos = 0;
+        while ((pos = builderSection.IndexOf(search, pos, StringComparison.Ordinal)) >= 0)
+        {
+            withIdCount++;
+            pos += search.Length;
+        }
+
+        await Assert.That(withIdCount).IsEqualTo(1);
     }
 }
