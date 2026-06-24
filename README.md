@@ -436,6 +436,78 @@ The fluent builder (`GetSample().WithId(...).Send(...)`) is generated at compile
 
 ---
 
+### Worker Jobs (ProjectTemplate.Worker)
+
+`ProjectTemplate.Worker` is a companion background-worker project that shares the same Sliced Core layer model. It uses [TickerQ](https://github.com/TickerQ/TickerQ) for cron-based job scheduling and calls back into the API via the generated `ProjectTemplateClient` (Refit client). The worker has no HTTP listener — it runs as a .NET Generic Host.
+
+#### File layout
+
+Each worker feature adds one extra file alongside the standard contracts and layer-logic files:
+
+```
+Domains/
+  Sample/
+    Domain.cs                     # business model + persistence model (identical to API pattern)
+    CreateSample.Contracts.cs     # ICreateSampleRequest / ICreateSampleResponse + Core DTOs
+    CreateSample.cs               # PresentationLayer / ApplicationLayer / InfrastructureLayer logic
+    CreateSample.Job.cs           # TickerQ job class + RegisterJob helper
+```
+
+#### Job file (`CreateSample.Job.cs`)
+
+The job class lives inside `PresentationLayer` and implements `ITickerFunction`. The static `RegisterJob` helper registers the cron schedule:
+
+```csharp
+partial class PresentationLayer
+{
+    internal sealed class CreateSampleJob(ILogger<CreateSampleJob> logger, IMediator mediator) : ITickerFunction
+    {
+        public async Task ExecuteAsync(TickerFunctionContext context, CancellationToken cancellationToken = default)
+        {
+            var result = await mediator.CreateSample()
+                .WithId(1)
+                .Send(cancellationToken);
+
+            if (result.IsError())
+                throw new InvalidOperationException(string.Join(", ", result.Errors));
+        }
+    }
+}
+
+internal static IServiceCollection RegisterJob(IServiceCollection services)
+{
+    services.MapTickerGroup("Sample", group =>
+    {
+        group.MapTicker<PresentationLayer.CreateSampleJob>("CreateSample")
+            .WithCron("0 * * * * *")
+            .WithMaxConcurrency(1);
+    });
+    return services;
+}
+```
+
+Call `RegisterJob` from `Program.Services.cs` to activate the schedule.
+
+#### Layer logic differences
+
+- **ApplicationLayer** — calls the typed Refit client (`ProjectTemplateClient`) to read data from the API.
+- **InfrastructureLayer** — calls the typed Refit client to write data back through the API; does not access a database directly.
+- The worker's `AppDbContext` is present for the source generator's EF Core model registration, but typical worker features delegate persistence to the API rather than writing to the database directly.
+
+#### Worker configuration
+
+| Section | Key | Description |
+|---|---|---|
+| `ProjectTemplateClient` | `BaseUri` | Base URI of the API that this worker calls (e.g., `https://localhost:5001/api/v1`). |
+| `HmacRedactorOptions` | `Key` | Base-64 HMAC key for PII redaction (same as the API project). |
+| `HmacRedactorOptions` | `KeyId` | Numeric key identifier for key rotation. |
+
+#### Adding a new worker feature
+
+Follow the same steps as adding an API feature (see [Creating a New Feature](#creating-a-new-feature)), then add a `{Feature}.Job.cs` file that wires the TickerQ cron schedule.
+
+---
+
 ### What the Source Code Generator Produces
 
 From the contract interfaces you declare, the source code generator produces at compile time:
