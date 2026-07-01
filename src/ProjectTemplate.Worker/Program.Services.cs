@@ -49,6 +49,6 @@ public partial class Program
         builder.Services.AddProjectTemplateClient(new Uri(baseUri));
 
         builder.Services.AddTickerQ();
-        CreateSample.RegisterJob(builder.Services);
+        CreateSampleJob.RegisterJob(builder.Services);
     }
 }
