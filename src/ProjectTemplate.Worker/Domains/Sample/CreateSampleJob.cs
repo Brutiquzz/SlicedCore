@@ -78,11 +78,9 @@ public partial class CreateSampleJob
     {
         private async Task<Result<Core.IPersistenceResponseDTO>> InfrastructureLogic(Core.IPersistenceRequestDTO request, CancellationToken cancellationToken)
         {
-            var client = GetRequiredService<ProjectTemplateClient>();
-
             try
             {
-                var response = await client.Sample.CreateSample()
+                var response = await clientCommands.CreateSample()
                     .WithName(request.Name)
                     .WithName2(request.Name2)
                     .Send(cancellationToken);

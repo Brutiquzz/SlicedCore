@@ -215,6 +215,7 @@ public sealed class GenerateRefitClientGenerator : IIncrementalGenerator
 
         AppendWrapper(sb, wrapperName, domains.Select(static group => group.Key).ToList());
         AppendServiceCollectionExtensions(sb, wrapperName, domains.Select(static group => group.Key).ToList());
+        AppendClientSurfaces(sb, wrapperName, endpoints);
 
         return sb.ToString();
     }
@@ -503,6 +504,84 @@ public sealed class GenerateRefitClientGenerator : IIncrementalGenerator
         sb.AppendLine("        return services;");
         sb.AppendLine("    }");
         sb.AppendLine("}");
+    }
+
+    private static void AppendClientSurfaces(StringBuilder sb, string wrapperName, IReadOnlyList<ClientEndpoint> endpoints)
+    {
+        var commandEndpoints = new List<ClientEndpoint>();
+        var queryEndpoints = new List<ClientEndpoint>();
+
+        foreach (var endpoint in endpoints)
+        {
+            if (string.Equals(endpoint.HttpAttribute, "Get", StringComparison.Ordinal))
+                queryEndpoints.Add(endpoint);
+            else
+                commandEndpoints.Add(endpoint);
+        }
+
+        AppendClientSurfaceStruct(sb, "ClientCommands", wrapperName, "command (non-GET)");
+        AppendClientSurfaceStruct(sb, "ClientQueries", wrapperName, "query (GET)");
+
+        if (commandEndpoints.Count > 0)
+        {
+            sb.AppendLine("/// <summary>Extension methods for dispatching command (non-GET) client operations via <see cref=\"ClientCommands\"/>.</summary>");
+            sb.AppendLine("public static class ClientCommandsExtensions");
+            sb.AppendLine("{");
+            foreach (var endpoint in commandEndpoints)
+                AppendClientSurfaceMethod(sb, "ClientCommands", endpoint);
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
+        if (queryEndpoints.Count > 0)
+        {
+            sb.AppendLine("/// <summary>Extension methods for dispatching query (GET) client operations via <see cref=\"ClientQueries\"/>.</summary>");
+            sb.AppendLine("public static class ClientQueriesExtensions");
+            sb.AppendLine("{");
+            foreach (var endpoint in queryEndpoints)
+                AppendClientSurfaceMethod(sb, "ClientQueries", endpoint);
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+    }
+
+    private static void AppendClientSurfaceStruct(StringBuilder sb, string structName, string wrapperName, string description)
+    {
+        sb.AppendLine($"/// <summary>Typed client surface for {description} operations. Use generated extension methods; do not access <see cref=\"Inner\"/> directly.</summary>");
+        sb.AppendLine($"public readonly struct {structName}");
+        sb.AppendLine("{");
+        sb.AppendLine("    /// <summary>The underlying client. For use by generated extension methods only.</summary>");
+        sb.AppendLine("    [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
+        sb.AppendLine($"    public readonly {wrapperName} Inner;");
+        sb.AppendLine();
+        sb.AppendLine($"    /// <summary>Initialises a new <see cref=\"{structName}\"/> wrapping <paramref name=\"client\"/>.</summary>");
+        sb.AppendLine($"    public {structName}({wrapperName} client) => Inner = client;");
+        sb.AppendLine("}");
+        sb.AppendLine();
+    }
+
+    private static void AppendClientSurfaceMethod(StringBuilder sb, string structName, ClientEndpoint endpoint)
+    {
+        var builderType = endpoint.MethodName + "RequestBuilder";
+        var domainAccess = "surface.Inner." + endpoint.DomainName;
+
+        sb.AppendLine($"    /// <summary>Returns a fluent builder for the <c>{endpoint.MethodName}</c> operation.</summary>");
+        sb.AppendLine($"    public static {builderType} {endpoint.MethodName}(this {structName} surface)");
+        sb.AppendLine($"        => {domainAccess}.{endpoint.MethodName}();");
+        sb.AppendLine();
+
+        if (endpoint.RouteParameters.Count > 0)
+        {
+            sb.AppendLine($"    /// <summary>Returns a fluent builder for the <c>{endpoint.MethodName}</c> operation with pre-populated route values.</summary>");
+            sb.Append($"    public static {builderType} {endpoint.MethodName}(this {structName} surface");
+            foreach (var param in endpoint.RouteParameters)
+                sb.Append($", {param.TypeName} {ToCamelCase(param.Name)}");
+            sb.AppendLine(")");
+            sb.Append($"        => {domainAccess}.{endpoint.MethodName}(");
+            sb.Append(string.Join(", ", endpoint.RouteParameters.Select(static p => ToCamelCase(p.Name))));
+            sb.AppendLine(");");
+            sb.AppendLine();
+        }
     }
 
     private static bool IsHttpMapInvocation(InvocationExpressionSyntax invocation)
