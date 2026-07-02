@@ -66,6 +66,22 @@ src/
 	GenerateCoreBoilerplateGenerator.cs
 	GenerateExtensionsBoilerplateGenerator.cs
 
+  ProjectTemplate.Worker/              ← Worker service (standalone project template)
+	Domains/
+	  Sample/
+		CreateSampleJob.cs             ← Job feature logic (Presentation/Application/Infrastructure)
+		CreateSampleJob.Contracts.cs   ← DTOs and request/response interfaces (private per feature)
+		CreateSampleJob.Job.cs         ← TickerQ job registration and recurring schedule
+	  .template/
+		job/
+		  .template.config/
+			template.json              ← dotnet new item template for worker jobs
+	.template.config/
+	  template.json                    ← dotnet new project template for the worker
+	Program.cs                         ← Worker host entry point
+	Program.Services.cs                ← DI configuration
+	Program.Dependencies.cs            ← Layer-specific service registration
+
   ProjectTemplate.Tests/               ← TUnit + WebApplicationFactory tests
 	Domains/
 	  Sample/

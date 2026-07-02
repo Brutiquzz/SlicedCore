@@ -29,6 +29,14 @@
 
   <ItemGroup>
     <Compile Remove="Generated\**\*.cs" />
+    <Compile Remove="Domains\.template\**\*.cs" />
+    <Content Remove="Domains\.template\**" />
+    <None Remove="Domains\.template\**" />
+    <EmbeddedResource Remove="Domains\.template\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include=".template.config\template.json" />
   </ItemGroup>
 
 </Project>
