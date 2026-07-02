@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Hosting;
+
 namespace ProjectTemplate.Dependencies;
 
 /// <summary>
@@ -7,13 +9,13 @@ namespace ProjectTemplate.Dependencies;
 /// </summary>
 public sealed class PresentationLayerBuilder
 {
-    private readonly WebApplicationBuilder _builder;
+    private readonly IHostApplicationBuilder _builder;
 
     /// <summary>Provides read-only access to the application configuration for use during service registration.</summary>
     public IConfiguration Configuration => _builder.Configuration;
 
     /// <param name="builder">The web application builder to register services into.</param>
-    public PresentationLayerBuilder(WebApplicationBuilder builder)
+    public PresentationLayerBuilder(IHostApplicationBuilder builder)
     {
         _builder = builder;
     }

@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <!-- CS0436: suppress source-generator type conflicts that arise when the same Roslyn
+         generator (e.g. ReactiveUI.Primitives.R3Bridge.Generator via Refit) runs on both
+         a referenced assembly and this test project. The compiler picks the local copy;
+         there is no runtime impact. -->
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
   </PropertyGroup>
 
   <!-- SQLitePCLRaw.lib.e_sqlite3 2.1.11 (GHSA-2m69-gcr7-jv3q) is a test-only transitive

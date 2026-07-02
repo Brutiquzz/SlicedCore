@@ -23,11 +23,28 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
             })
             .Where(static symbol => symbol is not null);
 
-        var compilationAndCandidates = context.CompilationProvider.Combine(candidates.Collect());
+        // Collect namespaces that contain a [Domain] class with a [BusinessModel] interface.
+        var namespacesWithBusinessModel = context.SyntaxProvider.ForAttributeWithMetadataName(
+            fullyQualifiedMetadataName: "ProjectTemplate.Dependencies.Attributes.DomainAttribute",
+            predicate: static (node, _) => node is ClassDeclarationSyntax,
+            transform: static (syntaxContext, cancellationToken) =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var symbol = (INamedTypeSymbol)syntaxContext.TargetSymbol;
+                if (symbol.ContainingNamespace.IsGlobalNamespace) return null;
+                var hasBusinessModel = symbol.GetTypeMembers().Any(static m =>
+                    m.TypeKind == TypeKind.Interface &&
+                    m.GetAttributes().Any(static a => a.AttributeClass?.Name == "BusinessModelAttribute"));
+                return hasBusinessModel ? symbol.ContainingNamespace.ToDisplayString() : null;
+            })
+            .Where(static ns => ns is not null)
+            .Collect();
 
-        context.RegisterSourceOutput(compilationAndCandidates, static (productionContext, source) =>
+        var combined = context.CompilationProvider.Combine(candidates.Collect()).Combine(namespacesWithBusinessModel);
+
+        context.RegisterSourceOutput(combined, static (productionContext, source) =>
         {
-            var (compilation, features) = source;
+            var ((compilation, features), domainNs) = source;
 
             foreach (var featureSymbol in features.Distinct(SymbolEqualityComparer.Default).OfType<INamedTypeSymbol>())
             {
@@ -46,13 +63,15 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
                     .FirstOrDefault(a => a.AttributeClass?.Name == "FeatureAttribute")
                     ?.ConstructorArguments.FirstOrDefault().Value is 1; // FeatureType.Query = 1
 
-                var sourceText = BuildSource(targetNamespace, featureName, coreType, domainName, isQuery);
+                var hasDomainModel = domainNs.Any(ns => ns == targetNamespace);
+
+                var sourceText = BuildSource(targetNamespace, featureName, coreType, domainName, isQuery, hasDomainModel, compilation);
                 productionContext.AddSource(GetHintName(targetNamespace, featureName), SourceText.From(sourceText, Encoding.UTF8));
             }
         });
     }
 
-    private static string BuildSource(string targetNamespace, string featureName, INamedTypeSymbol coreType, string domainName, bool isQuery)
+    private static string BuildSource(string targetNamespace, string featureName, INamedTypeSymbol coreType, string domainName, bool isQuery, bool hasDomainModel, Compilation compilation)
     {
         var coreNs = $"global::{targetNamespace}.{featureName}.Core";
         var builder = new StringBuilder();
@@ -66,7 +85,7 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
         builder.AppendLine("public partial class " + featureName);
         builder.AppendLine("{");
 
-        AppendHandler(builder, targetNamespace, featureName, coreNs, domainName, isQuery);
+        AppendHandler(builder, targetNamespace, featureName, coreNs, domainName, isQuery, hasDomainModel);
         builder.AppendLine();
 
         AppendForwardHelper(builder, featureName, coreNs, isQuery);
@@ -89,12 +108,14 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
             builder.AppendLine();
         }
 
+        AppendApplicationClientFields(builder, targetNamespace, compilation);
+
         builder.AppendLine("    public sealed partial class Application { }");
         builder.AppendLine("}");
         return builder.ToString();
     }
 
-    private static void AppendHandler(StringBuilder builder, string targetNamespace, string featureName, string coreNs, string domainName, bool isQuery)
+    private static void AppendHandler(StringBuilder builder, string targetNamespace, string featureName, string coreNs, string domainName, bool isQuery, bool hasDomainModel)
     {
         var handlerName = "ApplicationLayer";
         var eventInterfaceName = $"{coreNs}.I{featureName}EventApplicationLayer";
@@ -117,17 +138,22 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
         builder.AppendLine("        {");
         builder.AppendLine("            LogExecuting(new global::ProjectTemplate.Compliance.RedactedLog<" + coreNs + ".IApplicationRequestDTO>(command.Request, redactorProvider).ToString());");
         builder.AppendLine();
-        builder.AppendLine("            var sample = command.Request.Adapt<" + modelTypeName + ">();");
+        if (hasDomainModel)
+        {
+            builder.AppendLine("            var sample = command.Request.Adapt<" + modelTypeName + ">();");
+        }
         builder.AppendLine("            var validator = GetRequiredService<ApplicationLayer." + businessValidatorName + ">();");
-        builder.AppendLine("            if (await validator.ValidateAsync(sample, cancellationToken) is { IsValid: false } validationResult)");
+        var validationTarget = hasDomainModel ? "sample" : "command.Request";
+        builder.AppendLine("            if (await validator.ValidateAsync(" + validationTarget + ", cancellationToken) is { IsValid: false } validationResult)");
         builder.AppendLine("            {");
         builder.AppendLine("                LogBusinessValidationFailed(new global::ProjectTemplate.Compliance.RedactedLog<" + coreNs + ".IApplicationRequestDTO>(command.Request, redactorProvider).ToString());");
         builder.AppendLine("                return global::Ardalis.Result.Result.Invalid(validationResult.AsErrors());");
         builder.AppendLine("            }");
         builder.AppendLine();
+        var applicationLogicArg = hasDomainModel ? "sample" : "command.Request";
         builder.AppendLine("            try");
         builder.AppendLine("            {");
-        builder.AppendLine("                return await ApplicationLogic(sample, cancellationToken);");
+        builder.AppendLine("                return await ApplicationLogic(" + applicationLogicArg + ", cancellationToken);");
         builder.AppendLine("            }");
         builder.AppendLine("            catch (global::System.OperationCanceledException)");
         builder.AppendLine("            {");
@@ -292,5 +318,54 @@ public sealed class GenerateApplicationBoilerplateGenerator : IIncrementalGenera
         }
 
         return namespaceName;
+    }
+
+    private static void AppendApplicationClientFields(StringBuilder builder, string targetNamespace, Compilation compilation)
+    {
+        var surface = FindClientSurface(compilation, targetNamespace);
+        if (surface is null)
+            return;
+
+        var (clientNs, wrapperName) = surface.Value;
+        var commandsType = "global::" + clientNs + ".ClientCommands";
+        var queriesType = "global::" + clientNs + ".ClientQueries";
+        var clientType = "global::" + clientNs + "." + wrapperName;
+
+        builder.AppendLine("    partial class ApplicationLayer");
+        builder.AppendLine("    {");
+        builder.AppendLine("        private " + queriesType + " clientQueries");
+        builder.AppendLine("            => new " + queriesType + "(GetRequiredService<" + clientType + ">());");
+        builder.AppendLine();
+        builder.AppendLine("        [global::System.Obsolete(\"Application layer cannot invoke client command (non-GET) operations.\", error: true)]");
+        builder.AppendLine("        private " + commandsType + " clientCommands");
+        builder.AppendLine("            => throw new global::System.NotSupportedException();");
+        builder.AppendLine("    }");
+        builder.AppendLine();
+    }
+
+    private static (string ClientNs, string WrapperName)? FindClientSurface(Compilation compilation, string targetNamespace)
+    {
+        const string domainsSegment = ".Domains.";
+        var domainsIndex = targetNamespace.IndexOf(domainsSegment, StringComparison.Ordinal);
+        var rootBase = domainsIndex >= 0
+            ? targetNamespace.Substring(0, domainsIndex)
+            : targetNamespace;
+
+        var rootParts = rootBase.Split('.');
+        for (var len = rootParts.Length; len >= 1; len--)
+        {
+            var root = string.Join(".", rootParts, 0, len);
+            var clientNs = root + ".Client";
+            if (compilation.GetTypeByMetadataName(clientNs + ".ClientCommands") is not null)
+            {
+                var lastPart = rootParts[len - 1];
+                var wrapperName = string.IsNullOrEmpty(lastPart) || char.IsUpper(lastPart[0])
+                    ? lastPart + "Client"
+                    : char.ToUpperInvariant(lastPart[0]) + lastPart.Substring(1) + "Client";
+                return (clientNs, wrapperName);
+            }
+        }
+
+        return null;
     }
 }

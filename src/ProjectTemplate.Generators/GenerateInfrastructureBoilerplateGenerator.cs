@@ -27,11 +27,28 @@ public sealed class GenerateInfrastructureBoilerplateGenerator : IIncrementalGen
             })
             .Where(static t => t.Symbol is not null);
 
-        var compilationAndCandidates = context.CompilationProvider.Combine(candidates.Collect());
+        // Collect namespaces that contain a [Domain] class with a [PersistenceModel] interface.
+        var namespacesWithEntityModel = context.SyntaxProvider.ForAttributeWithMetadataName(
+            fullyQualifiedMetadataName: "ProjectTemplate.Dependencies.Attributes.DomainAttribute",
+            predicate: static (node, _) => node is ClassDeclarationSyntax,
+            transform: static (syntaxContext, cancellationToken) =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var symbol = (INamedTypeSymbol)syntaxContext.TargetSymbol;
+                if (symbol.ContainingNamespace.IsGlobalNamespace) return null;
+                var hasPersistenceModel = symbol.GetTypeMembers().Any(static m =>
+                    m.TypeKind == TypeKind.Interface &&
+                    m.GetAttributes().Any(static a => a.AttributeClass?.Name == "PersistenceModelAttribute"));
+                return hasPersistenceModel ? symbol.ContainingNamespace.ToDisplayString() : null;
+            })
+            .Where(static ns => ns is not null)
+            .Collect();
 
-        context.RegisterSourceOutput(compilationAndCandidates, static (productionContext, source) =>
+        var combined = context.CompilationProvider.Combine(candidates.Collect()).Combine(namespacesWithEntityModel);
+
+        context.RegisterSourceOutput(combined, static (productionContext, source) =>
         {
-            var (compilation, features) = source;
+            var ((compilation, features), domainNs) = source;
 
             foreach (var (featureSymbol, isQuery) in features.Distinct())
             {
@@ -46,13 +63,15 @@ public sealed class GenerateInfrastructureBoilerplateGenerator : IIncrementalGen
 
                 var domainName = GetDomainName(featureSymbol.ContainingNamespace);
 
-                var sourceText = BuildSource(targetNamespace, featureName, coreType, domainName, isQuery);
+                var hasEntityModel = domainNs.Any(ns => ns == targetNamespace);
+
+                var sourceText = BuildSource(targetNamespace, featureName, coreType, domainName, isQuery, hasEntityModel, compilation);
                 productionContext.AddSource(GetHintName(targetNamespace, featureName), SourceText.From(sourceText, Encoding.UTF8));
             }
         });
     }
 
-    private static string BuildSource(string targetNamespace, string featureName, INamedTypeSymbol coreType, string domainName, bool isQuery)
+    private static string BuildSource(string targetNamespace, string featureName, INamedTypeSymbol coreType, string domainName, bool isQuery, bool hasEntityModel, Compilation compilation)
     {
         var coreNs = $"global::{targetNamespace}.{featureName}.Core";
         var builder = new StringBuilder();
@@ -66,7 +85,7 @@ public sealed class GenerateInfrastructureBoilerplateGenerator : IIncrementalGen
         builder.AppendLine("public partial class " + featureName);
         builder.AppendLine("{");
 
-        AppendHandler(builder, targetNamespace, featureName, coreNs, domainName, isQuery);
+        AppendHandler(builder, targetNamespace, featureName, coreNs, domainName, isQuery, hasEntityModel);
         builder.AppendLine();
 
         var persistenceResponseInterface = coreType.GetTypeMembers("IPersistenceResponseDTO").FirstOrDefault();
@@ -76,12 +95,14 @@ public sealed class GenerateInfrastructureBoilerplateGenerator : IIncrementalGen
             builder.AppendLine();
         }
 
+        AppendInfrastructureClientFields(builder, targetNamespace, compilation);
+
         builder.AppendLine("    private sealed partial class Infrastructure { }");
         builder.AppendLine("}");
         return builder.ToString();
     }
 
-    private static void AppendHandler(StringBuilder builder, string targetNamespace, string featureName, string coreNs, string domainName, bool isQuery)
+    private static void AppendHandler(StringBuilder builder, string targetNamespace, string featureName, string coreNs, string domainName, bool isQuery, bool hasEntityModel)
     {
         var handlerName = "InfrastructureLayer";
         var eventInterfaceName = $"{coreNs}.I{featureName}EventInfrastructureLayer";
@@ -106,10 +127,14 @@ public sealed class GenerateInfrastructureBoilerplateGenerator : IIncrementalGen
         builder.AppendLine("        async global::System.Threading.Tasks.Task<" + resultTypeName + "> " + handlerInterface + ".Handle(" + eventInterfaceName + " command, global::System.Threading.CancellationToken cancellationToken)");
         builder.AppendLine("        {");
         builder.AppendLine("            LogPersisting(new global::ProjectTemplate.Compliance.RedactedLog<" + coreNs + ".IPersistenceRequestDTO>(command.Request, redactorProvider).ToString());");
-        builder.AppendLine("            var entity = command.Request.Adapt<" + entityTypeName + ">();");
+        if (hasEntityModel)
+        {
+            builder.AppendLine("            var entity = command.Request.Adapt<" + entityTypeName + ">();");
+        }
+        var infraLogicArg = hasEntityModel ? "entity" : "command.Request";
         builder.AppendLine("            try");
         builder.AppendLine("            {");
-        builder.AppendLine("                return await InfrastructureLogic(entity, cancellationToken);");
+        builder.AppendLine("                return await InfrastructureLogic(" + infraLogicArg + ", cancellationToken);");
         builder.AppendLine("            }");
         builder.AppendLine("            catch (global::System.OperationCanceledException)");
         builder.AppendLine("            {");
@@ -213,5 +238,54 @@ public sealed class GenerateInfrastructureBoilerplateGenerator : IIncrementalGen
         }
 
         return namespaceName;
+    }
+
+    private static void AppendInfrastructureClientFields(StringBuilder builder, string targetNamespace, Compilation compilation)
+    {
+        var surface = FindClientSurface(compilation, targetNamespace);
+        if (surface is null)
+            return;
+
+        var (clientNs, wrapperName) = surface.Value;
+        var commandsType = "global::" + clientNs + ".ClientCommands";
+        var queriesType = "global::" + clientNs + ".ClientQueries";
+        var clientType = "global::" + clientNs + "." + wrapperName;
+
+        builder.AppendLine("    partial class InfrastructureLayer");
+        builder.AppendLine("    {");
+        builder.AppendLine("        private " + commandsType + " clientCommands");
+        builder.AppendLine("            => new " + commandsType + "(GetRequiredService<" + clientType + ">());");
+        builder.AppendLine();
+        builder.AppendLine("        [global::System.Obsolete(\"Infrastructure layer cannot invoke client query (GET) operations.\", error: true)]");
+        builder.AppendLine("        private " + queriesType + " clientQueries");
+        builder.AppendLine("            => throw new global::System.NotSupportedException();");
+        builder.AppendLine("    }");
+        builder.AppendLine();
+    }
+
+    private static (string ClientNs, string WrapperName)? FindClientSurface(Compilation compilation, string targetNamespace)
+    {
+        const string domainsSegment = ".Domains.";
+        var domainsIndex = targetNamespace.IndexOf(domainsSegment, StringComparison.Ordinal);
+        var rootBase = domainsIndex >= 0
+            ? targetNamespace.Substring(0, domainsIndex)
+            : targetNamespace;
+
+        var rootParts = rootBase.Split('.');
+        for (var len = rootParts.Length; len >= 1; len--)
+        {
+            var root = string.Join(".", rootParts, 0, len);
+            var clientNs = root + ".Client";
+            if (compilation.GetTypeByMetadataName(clientNs + ".ClientCommands") is not null)
+            {
+                var lastPart = rootParts[len - 1];
+                var wrapperName = string.IsNullOrEmpty(lastPart) || char.IsUpper(lastPart[0])
+                    ? lastPart + "Client"
+                    : char.ToUpperInvariant(lastPart[0]) + lastPart.Substring(1) + "Client";
+                return (clientNs, wrapperName);
+            }
+        }
+
+        return null;
     }
 }

@@ -74,7 +74,7 @@ public partial class GetSample
             // store the result, and return it. Subsequent reads for the same id are served
             // directly from the cache without hitting the database.
             var cache = GetRequiredService<IAppCache>();
-
+            
             var cached = await cache.GetOrCreateAsync(
                 CachePayload.KeyFor<SampleEntity>(entity.Id),
                 async ct =>

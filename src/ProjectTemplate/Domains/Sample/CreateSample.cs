@@ -54,7 +54,7 @@ public partial class CreateSample
             
             // Implement business logic
             // ...
-            
+
             var persistenceDTOResponse = await ForwardToInfrastructureLayer(sample.Adapt<CreateSamplePersistenceRequestDTO>(), cancellationToken);
             
             if (persistenceDTOResponse.IsError())
